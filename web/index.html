@@ -192,21 +192,17 @@
             </div>
 
             <!-- ANALÝZA FREKVENCIE SLOVA (Na mobile zbalené s rozklikom) -->
-            <div id="feed-search-panel" class="glass-panel p-4 rounded-xl hidden flex flex-col">
+            <div id="feed-search-panel" class="glass-panel p-4 rounded-xl admin-only hidden flex flex-col">
                 <div class="flex items-center justify-between cursor-pointer md:cursor-default" onclick="toggleFeedSearchMobile()">
                     <div class="flex items-center gap-2">
-                        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">🔍 Frekvencia Slova (Tep)</h3>
-                        <span class="text-[9px] text-white bg-[#990000] px-1.5 py-0.2 border border-white/20 font-telemetry">AI</span>
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">🔍 Admin Analýza Slova (Tep)</h3>
+                        <span class="text-[9px] text-white bg-[#990000] px-1.5 py-0.5 font-telemetry font-bold">ADMIN</span>
                     </div>
                     <button class="md:hidden text-xs text-white px-2 py-0.5 bg-black border border-white/20">
                         <span id="feed-search-arrow">▼</span>
                     </button>
                 </div>
                 <div id="feed-search-wrapper" class="hidden md:block mt-2.5">
-                <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">🔍 Frekvencia Slova (Tep)</h3>
-                    <span class="text-[10px] text-white bg-[#990000] px-1.5 py-0.5 rounded border border-white/20">Multilingual AI</span>
-                </div>
                 <div class="flex gap-2">
                     <input type="text" id="keyword-input" placeholder="Zlato, ropa, Boeing..." onkeydown="if(event.key==='Enter') analyzeKeyword()" 
                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-white/20">
@@ -541,9 +537,9 @@
                     <button onclick="setGlobePeriod('all')" id="gp-all" class="px-2.5 py-1 rounded hover:bg-white/10 text-gray-300 transition text-[11px] md:text-xs">VŠETKO</button>
                 </div>
 
-                <!-- Word Search priamo na Glóbuse -->
-                <div class="flex items-center gap-1.5">
-                    <input type="text" id="globe-keyword-input" placeholder="Zadaj slovo (Zlato, Ropa, AI...)" 
+                <!-- Word Search priamo na Glóbuse (Dostupný iba pre admina) -->
+                <div class="admin-only hidden flex items-center gap-1.5">
+                    <input type="text" id="globe-keyword-input" placeholder="Admin radar (Zlato, Ropa, AI...)" 
                            class="bg-[#000000] border border-white/15 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#990000] w-52 font-mono">
                     <button onclick="applyGlobeKeyword()" class="px-3.5 py-1.5 bg-[#990000] hover:bg-[#b30000] font-bold text-white rounded-lg text-xs transition uppercase tracking-wider">
                         Radarovať
