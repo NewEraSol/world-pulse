@@ -160,21 +160,31 @@
         <!-- Ľavý stĺpec: Časové obdobie, Hľadanie slova, Krajiny -->
         <div class="lg:col-span-1 space-y-5">
             
-            <!-- ČASOVÝ OVLÁDACÍ PANEL -->
-            <div class="glass-panel p-4 rounded-xl">
-                <div class="flex items-center justify-between mb-2.5">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">⏱️ Časové Obdobie</h3>
-                    <button onclick="resetFilters()" class="px-2 py-0.5 bg-[#990000] hover:bg-[#b30000] text-white rounded text-[10px] font-telemetry font-bold transition flex items-center gap-1 uppercase" title="Vynulovať všetky filtre a zobraziť všetko">
-                        <span>✕</span> Zrušiť filtre
-                    </button>
+            <!-- ČASOVÝ OVLÁDACÍ PANEL (Na mobile zbalený s rozklikom) -->
+            <div class="glass-panel p-4 rounded-xl flex flex-col">
+                <div class="flex items-center justify-between cursor-pointer md:cursor-default" onclick="toggleFeedPeriodMobile()">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">⏱️ Časové Obdobie</h3>
+                        <span id="feed-mobile-selected-period" class="text-[10px] font-telemetry text-white md:hidden font-bold uppercase bg-[#990000] px-1.5 py-0.2 border border-white/10">24 hodín</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="event.stopPropagation(); resetFilters();" class="px-2 py-0.5 bg-[#990000] hover:bg-[#b30000] text-white rounded text-[10px] font-telemetry font-bold transition flex items-center gap-1 uppercase" title="Vynulovať všetky filtre a zobraziť všetko">
+                            <span>✕</span> Zrušiť
+                        </button>
+                        <button class="md:hidden text-xs text-white px-2 py-0.5 bg-black border border-white/20">
+                            <span id="feed-period-arrow">▼</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="grid grid-cols-3 gap-1.5 text-xs">
-                    <button onclick="setPeriod('1h')" id="p-1h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">1 hodina</button>
-                    <button onclick="setPeriod('6h')" id="p-6h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">6 hodín</button>
-                    <button onclick="setPeriod('24h')" id="p-24h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center active transition">24 hodín</button>
-                    <button onclick="setPeriod('7d')" id="p-7d" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">7 dní</button>
-                    <button onclick="setPeriod('30d')" id="p-30d" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">30 dní</button>
-                    <button onclick="setPeriod('all')" id="p-all" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">Všetko</button>
+                <div id="feed-period-wrapper" class="hidden md:block mt-2.5">
+                    <div class="grid grid-cols-3 gap-1.5 text-xs">
+                        <button onclick="setPeriod('1h')" id="p-1h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">1 hodina</button>
+                        <button onclick="setPeriod('6h')" id="p-6h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">6 hodín</button>
+                        <button onclick="setPeriod('24h')" id="p-24h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center active transition">24 hodín</button>
+                        <button onclick="setPeriod('7d')" id="p-7d" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">7 dní</button>
+                        <button onclick="setPeriod('30d')" id="p-30d" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">30 dní</button>
+                        <button onclick="setPeriod('all')" id="p-all" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">Všetko</button>
+                    </div>
                 </div>
             </div>
 
@@ -834,6 +844,22 @@
             }
         }
 
+        
+        function toggleFeedPeriodMobile() {
+            if (window.innerWidth >= 768) return;
+            const wrapper = document.getElementById('feed-period-wrapper');
+            const arrow = document.getElementById('feed-period-arrow');
+            if (!wrapper) return;
+            const isHidden = wrapper.classList.contains('hidden');
+            if (isHidden) {
+                wrapper.classList.remove('hidden');
+                if (arrow) arrow.innerText = '▲';
+            } else {
+                wrapper.classList.add('hidden');
+                if (arrow) arrow.innerText = '▼';
+            }
+        }
+
         function toggleFeedCountryListMobile() {
             if (window.innerWidth >= 768) return; // len na mobile
             const wrapper = document.getElementById('feed-country-list-wrapper');
@@ -1069,6 +1095,18 @@
             loadStats();
             loadArticles(currentCountry, currentQuery);
             if (currentQuery) analyzeKeyword();
+
+            // Aktualizácia štítku a zbalenie na mobile
+            const pMap = {'1h': '1 hodina', '6h': '6 hodín', '24h': '24 hodín', '7d': '7 dní', '30d': '30 dní', 'all': 'Všetko'};
+            const mobLabel = document.getElementById('feed-mobile-selected-period');
+            if (mobLabel) mobLabel.innerText = pMap[p] || p;
+
+            if (window.innerWidth < 768) {
+                const wrapper = document.getElementById('feed-period-wrapper');
+                const arrow = document.getElementById('feed-period-arrow');
+                if (wrapper) wrapper.classList.add('hidden');
+                if (arrow) arrow.innerText = '▼';
+            }
         }
 
         function updateBadge() {
