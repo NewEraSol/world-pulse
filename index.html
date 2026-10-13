@@ -569,15 +569,9 @@
         </div>
 
         
-        <!-- Rýchle Radarové Filtre zo skutočného zoznamu alarmov -->
-        <div class="bg-[#000000] px-4 py-2.5 rounded-xl border border-white/10 flex flex-wrap items-center gap-2 text-xs font-telemetry">
-            <span class="text-gray-400 uppercase font-bold text-[11px] flex items-center gap-1.5 mr-1">
-                <span class="w-2 h-2 rounded-full bg-[#990000]"></span>
-                RADAR ALARMY:
-            </span>
-            <div id="globe-radar-tags-container" class="flex flex-wrap items-center gap-1.5">
-                <button onclick="setGlobeAlertFilter('', '')" id="gfilter-all" class="globe-tag-btn px-2.5 py-1 rounded bg-[#990000] text-white font-bold transition text-[11px] border border-white/20">VŠETKO</button>
-            </div>
+        <!-- Rýchle Radarové Filtre (Skryté z hornej lišty, integrované do bočného panelu) -->
+        <div id="globe-radar-tags-bar" class="hidden">
+            <div id="globe-radar-tags-container"></div>
         </div>
 
         <!-- 3D Glóbus Plátno & Bočný Panel Informácií (Rozdelenie podľa Esquire Intel) -->
@@ -631,9 +625,12 @@
                             <span id="globe-selected-count" class="text-xs bg-black text-white px-3 py-1 font-telemetry font-bold shadow-sm shrink-0">
                                 0 SPRÁV
                             </span>
-                            <button onclick="showAllCountriesGlobeArticles()" id="btn-show-all-countries" class="text-[10px] font-telemetry text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 border border-gray-300 px-2 py-0.5 transition uppercase font-bold" title="Zobraziť správy zo všetkých krajín sveta">
-                                VŠETKY KRAJINY
-                            </button>
+                            <div class="relative">
+                                <button onclick="toggleCountriesDropdown()" id="btn-show-all-countries" class="text-[10px] font-telemetry text-white bg-black hover:bg-[#990000] border border-black px-2.5 py-1 transition uppercase font-bold flex items-center gap-1 shadow-sm">
+                                    <span id="btn-country-filter-label">🌍 VŠETKY KRAJINY</span>
+                                    <span id="country-dropdown-arrow">▼</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -641,7 +638,7 @@
                     <div class="mt-3 pt-3 border-t border-gray-200 flex flex-wrap items-center justify-between gap-2">
                         <button onclick="openRadarWordsModal()" class="px-3 py-1.5 bg-black hover:bg-[#990000] text-white text-[11px] font-telemetry font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-sm border border-black">
                             <span>🎯</span>
-                            <span>KĽÚČOVÉ SLOVÁ & ALARMY</span>
+                            <span>RADAR ALARMY</span>
                             <span id="btn-words-count-badge" class="bg-[#990000] text-white px-1.5 py-0.2 text-[9px] font-bold">VŠETKY</span>
                         </button>
                         
@@ -684,9 +681,18 @@
                         </button>
                     </div>
 
-                    <!-- Rozklikávací kontajner pre mobil / štandardný pre desktop -->
-                    <div id="globe-countries-wrapper" class="hidden md:block">
-                        <div class="flex flex-wrap gap-1.5 max-h-32 md:max-h-24 overflow-y-auto pr-1 p-2 md:p-0 bg-gray-50 md:bg-transparent border md:border-0 border-gray-200" id="globe-top-countries-pills">
+                    <!-- Rozklikávací kontajner pre výber krajiny zo zásahov (otvára sa klikom na tlačidlo) -->
+                    <div id="globe-countries-wrapper" class="hidden mt-2 p-3 bg-gray-50 border-2 border-black transition shadow-md">
+                        <div class="flex justify-between items-center mb-2 pb-1 border-b border-gray-200">
+                            <span class="text-[10px] font-headline uppercase font-bold text-black tracking-wider flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-[#990000]"></span>
+                                NAJSILNEJŠIE RADAROVÉ ZÁSAHY KRAJÍN:
+                            </span>
+                            <button onclick="selectGlobeCountry('', 'Všetky krajiny sveta', 0)" class="text-[9.5px] font-telemetry text-[#990000] hover:underline uppercase font-bold">
+                                Zrušiť (Všetky)
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1" id="globe-top-countries-pills">
                             <!-- Naplní JS -->
                         </div>
                     </div>
@@ -921,7 +927,7 @@
         </div>
     </div>
 
-    <!-- MODAL POPUP OKNO: VÝBER KĽÚČOVÝCH SLOV & ALARMOV PRE 3D GLÓBUS -->
+    <!-- MODAL POPUP OKNO: RADAR ALARMY // VÝBER AKTÍVNYCH TÉM PRE 3D GLÓBUS -->
     <div id="radar-words-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white text-black border-2 border-black w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative">
             <!-- Modal Header -->
@@ -967,7 +973,7 @@
             <div class="flex-1 overflow-y-auto p-5 space-y-4 max-h-[420px]">
                 <div>
                     <span class="text-[11px] font-headline uppercase text-black font-bold tracking-wider block mb-2">
-                        🚨 SYSTÉMOVÉ ALARMY & SLEDOVANÉ TÉMY (KLIKNUTÍM PREPÍNAŠ ON/OFF):
+                        🚨 VŠETKY RADAROVÉ ALARMY (SYSTÉMOVÉ & KOMUNITNÉ):
                     </span>
                     <div id="modal-preset-alerts-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <!-- Naplní JS -->
@@ -2534,7 +2540,7 @@
                 countries.slice(0, 12).forEach(c => {
                     if (c.article_count > 0) {
                         pillsHtml += `
-                            <button onclick="rotateGlobeTo('${c.iso_code}', ${c.lat}, ${c.lon}, '${c.name_sk}', ${c.article_count})" 
+                            <button onclick="rotateGlobeTo('${c.iso_code}', ${c.lat}, ${c.lon}, '${c.name_sk}', ${c.article_count}); selectGlobeCountry('${c.iso_code}', '${c.name_sk}', ${c.article_count})" 
                                     class="px-2.5 py-1 bg-gray-100 hover:bg-[#990000] border border-gray-300 hover:border-[#990000] text-xs text-black hover:text-white flex items-center gap-1.5 transition font-telemetry font-bold group">
                                 <span class="w-2 h-2 rounded-full bg-[#990000] group-hover:bg-white inline-block"></span>
                                 <span>${c.name_sk}</span>
@@ -3161,7 +3167,7 @@
                 if (badge) badge.innerText = 'VŠETKY';
                 if (badge) badge.className = 'bg-black text-white px-1.5 py-0.2 text-[9px] font-bold';
                 if (clearBtn) clearBtn.classList.add('hidden');
-                if (previewContainer) previewContainer.innerHTML = '<span class="text-[10px] font-telemetry text-gray-400 italic">● Zobrazujú sa správy zo všetkých kľúčových slov a alarmov</span>';
+                if (previewContainer) previewContainer.innerHTML = '<span class="text-[10px] font-telemetry text-gray-400 italic">● Zobrazujú sa správy zo všetkých radarových alarmov</span>';
             } else {
                 if (badge) badge.innerText = `${radarActiveFilterWords.size} AKTÍVNYCH`;
                 if (badge) badge.className = 'bg-[#990000] text-white px-1.5 py-0.2 text-[9px] font-bold';
@@ -3331,9 +3337,38 @@
             }
         }
 
-                function showAllCountriesGlobeArticles() {
+                function toggleCountriesDropdown() {
+            const wrapper = document.getElementById('globe-countries-wrapper');
+            const arrow = document.getElementById('country-dropdown-arrow');
+            if (!wrapper) return;
+            const isHidden = wrapper.classList.contains('hidden');
+            if (isHidden) {
+                wrapper.classList.remove('hidden');
+                if (arrow) arrow.innerText = '▲';
+            } else {
+                wrapper.classList.add('hidden');
+                if (arrow) arrow.innerText = '▼';
+            }
+        }
+
+        function selectGlobeCountry(iso, name, count) {
+            const label = document.getElementById('btn-country-filter-label');
+            if (label) {
+                label.innerText = iso ? `📍 ${name} (${iso})` : '🌍 VŠETKY KRAJINY';
+            }
+            toggleCountriesDropdown();
+            loadGlobeCountryArticles(iso, name, count);
+        }
+
+        function showAllCountriesGlobeArticles() {
             radarActiveFilterWords.clear();
             toggleRadarWordInput(false);
+            const label = document.getElementById('btn-country-filter-label');
+            if (label) label.innerText = '🌍 VŠETKY KRAJINY';
+            const wrapper = document.getElementById('globe-countries-wrapper');
+            if (wrapper) wrapper.classList.add('hidden');
+            const arrow = document.getElementById('country-dropdown-arrow');
+            if (arrow) arrow.innerText = '▼';
             loadGlobeCountryArticles('', 'Všetky krajiny sveta', 0);
         }
 
@@ -3429,10 +3464,18 @@
                     if (countEl) countEl.innerText = `${currentCountryTotalCount} DEPEŠÍ`;
                 }
 
-            if (articles.length === 0) {
+            if (!articles || articles.length === 0) {
                 currentGlobeCountryArticles = [];
-                container.innerHTML = '<div class="text-center py-12 text-gray-500 text-xs">Žiadne články.</div>';
-                wordsHeader.innerHTML = '';
+                container.innerHTML = `
+                    <div class="text-center py-16 px-4 bg-gray-50 border-2 border-gray-200">
+                        <div class="text-lg mb-1 text-black font-headline uppercase font-bold">ŽIADNE ZAZNAMENANÉ DEPEŠE</div>
+                        <div class="text-xs font-telemetry text-gray-600 mb-3">V zvolenom časovom okne nebol zachytený žiadny signál pre tento filter.</div>
+                        <button onclick="clearRadarFilter()" class="px-4 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase transition">
+                            ✕ ZOBRAZIŤ VŠETKY DEPEŠE
+                        </button>
+                    </div>
+                `;
+                if (wordsHeader) wordsHeader.innerHTML = '<span class="text-[10px] font-telemetry uppercase text-gray-400">0 ZÁSAHOV</span>';
                 return;
             }
 
@@ -3466,8 +3509,16 @@
                 renderFilteredGlobeArticles();
 
             } catch (e) {
-                console.error(e);
-                container.innerHTML = '<div class="text-center py-12 text-red-500 text-xs">Chyba načítania.</div>';
+                console.error("Chyba spracovania článkov glóbusu:", e);
+                container.innerHTML = `
+                    <div class="text-center py-16 px-4 bg-gray-50 border-2 border-gray-200">
+                        <div class="text-lg mb-1 text-black font-headline uppercase font-bold">ŽIADNE NÁJDENÉ DEPEŠE</div>
+                        <div class="text-xs font-telemetry text-gray-600 mb-3">Pre vybraný alarm alebo krajinu v tomto časovom okne nie sú evidované žiadne zásahy.</div>
+                        <button onclick="clearRadarFilter()" class="px-4 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase transition">
+                            ✕ ZRUŠIŤ FILTER (ZOBRAZIŤ VŠETKO)
+                        </button>
+                    </div>
+                `;
             }
         }
 
