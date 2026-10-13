@@ -199,13 +199,23 @@
                 </div>
             </div>
 
-            <!-- ZOZNAM KRAJÍN -->
-            <div class="glass-panel p-4 rounded-xl flex flex-col h-[480px]">
-                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2.5">📍 Krajiny</h3>
-                <div class="flex-1 overflow-y-auto space-y-1 pr-1.5" id="country-list">
-                    <button onclick="filterCountry('')" class="w-full text-left px-3 py-1.5 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-xs flex justify-between">
-                        <span>Všetky krajiny</span>
-                    </button>
+            <!-- ZOZNAM KRAJÍN (Na mobile zbalený s rozklikom) -->
+            <div class="glass-panel p-4 rounded-xl flex flex-col">
+                <div class="flex items-center justify-between cursor-pointer md:cursor-default" onclick="toggleFeedCountryListMobile()">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">📍 Krajiny</h3>
+                    <div class="flex items-center gap-2">
+                        <span id="feed-mobile-selected-country" class="text-[10px] font-telemetry text-gray-400 md:hidden font-bold">Všetky krajiny</span>
+                        <button class="md:hidden text-xs text-white px-2 py-0.5 bg-black border border-white/20">
+                            <span id="feed-country-arrow">▼</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="feed-country-list-wrapper" class="hidden md:block mt-2.5 flex-1 overflow-y-auto space-y-1 pr-1.5 max-h-[350px] md:max-h-[440px]">
+                    <div id="country-list" class="space-y-1">
+                        <button onclick="filterCountry('')" class="w-full text-left px-3 py-1.5 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-xs flex justify-between">
+                            <span>Všetky krajiny</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -587,17 +597,25 @@
                     </div>
                 </div>
 
-                <!-- Rýchle prepínače top pulzujúcich krajín (Biely dizajn) -->
+                <!-- Rýchle prepínače top pulzujúcich krajín -->
                 <div class="border-t border-gray-200 pt-3 bg-white">
-                    <div class="text-[11px] font-headline uppercase text-black mb-2 font-bold flex justify-between items-center tracking-wider">
-                        <span class="flex items-center gap-1.5">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[11px] font-headline uppercase text-black font-bold flex items-center gap-1.5 tracking-wider">
                             <span class="w-2 h-2 rounded-full bg-[#990000] animate-pulse"></span>
-                            <span>NAJSILNEJŠIE RADAROVÉ ZÁSAHY KRAJÍN</span>
+                            <span>NAJSILNEJŠIE RADAROVÉ ZÁSAHY</span>
                         </span>
-                        <span class="text-[10px] font-telemetry text-gray-500 font-normal">KLIKNI PRE DETAIL</span>
+                        <!-- Mobilné tlačidlo pre otvorenie výberu krajiny -->
+                        <button onclick="toggleMobileCountryDropdown()" class="md:hidden px-2.5 py-1 bg-black text-white text-[10px] font-telemetry font-bold uppercase tracking-wider flex items-center gap-1 border border-black">
+                            <span>📍 VYBRAŤ KRAJINU</span>
+                            <span id="mobile-country-dropdown-arrow">▼</span>
+                        </button>
                     </div>
-                    <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1" id="globe-top-countries-pills">
-                        <!-- Naplní JS -->
+
+                    <!-- Rozklikávací kontajner pre mobil / štandardný pre desktop -->
+                    <div id="globe-countries-wrapper" class="hidden md:block">
+                        <div class="flex flex-wrap gap-1.5 max-h-32 md:max-h-24 overflow-y-auto pr-1 p-2 md:p-0 bg-gray-50 md:bg-transparent border md:border-0 border-gray-200" id="globe-top-countries-pills">
+                            <!-- Naplní JS -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -759,6 +777,36 @@
 
     <!-- JS Logic -->
     <script>
+        
+        function toggleMobileCountryDropdown() {
+            const wrapper = document.getElementById('globe-countries-wrapper');
+            const arrow = document.getElementById('mobile-country-dropdown-arrow');
+            if (!wrapper) return;
+            const isHidden = wrapper.classList.contains('hidden');
+            if (isHidden) {
+                wrapper.classList.remove('hidden');
+                if (arrow) arrow.innerText = '▲';
+            } else {
+                wrapper.classList.add('hidden');
+                if (arrow) arrow.innerText = '▼';
+            }
+        }
+
+        function toggleFeedCountryListMobile() {
+            if (window.innerWidth >= 768) return; // len na mobile
+            const wrapper = document.getElementById('feed-country-list-wrapper');
+            const arrow = document.getElementById('feed-country-arrow');
+            if (!wrapper) return;
+            const isHidden = wrapper.classList.contains('hidden');
+            if (isHidden) {
+                wrapper.classList.remove('hidden');
+                if (arrow) arrow.innerText = '▲';
+            } else {
+                wrapper.classList.add('hidden');
+                if (arrow) arrow.innerText = '▼';
+            }
+        }
+
         function formatTelemetryDate(dateVal) {
             if (!dateVal) return '';
             const d = new Date(dateVal);
@@ -1882,6 +1930,13 @@
         }
 
         function rotateGlobeTo(iso, lat, lon, name, count) {
+            // Na mobile po výbere krajiny zbalíme dropdown
+            if (window.innerWidth < 768) {
+                const wrapper = document.getElementById('globe-countries-wrapper');
+                const arrow = document.getElementById('mobile-country-dropdown-arrow');
+                if (wrapper) wrapper.classList.add('hidden');
+                if (arrow) arrow.innerText = '▼';
+            }
             // Presný prepočet zemepisnej dĺžky na uhol phi a theta pre Cobe
             // Shader v Cobe: _([lat, lon]) -> [-sin(lat)*sin(lon-PI), cos(lat), sin(lat)*cos(lon-PI)]
             // Preto stred prednej plochy z=1 nastane presne pri phi = -lon*PI/180 + PI:
