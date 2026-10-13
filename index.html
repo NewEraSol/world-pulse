@@ -114,8 +114,8 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Presný biely Header podľa predlohy s červeným horným pásikom -->
-    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 md:px-8 py-0 flex flex-wrap justify-between items-center shadow-md relative">
+    <!-- Presný biely Header podľa predlohy s červeným horným pásikom (na mobile sa pri scrolle plynule skryje) -->
+    <header id="main-header" class="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 md:px-8 py-0 flex flex-wrap justify-between items-center shadow-md relative transition-transform duration-300">
         <!-- Červený pásik vľavo nad logom ako na predlohe -->
         <div class="absolute top-0 left-4 md:left-8 w-36 md:w-44 h-1.5 bg-[#990000]"></div>
 
@@ -157,8 +157,8 @@
     <!-- VIEW 1: ŽIVÝ TOK A ANALÝZA -->
     <main id="view-feed" class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-        <!-- Ľavý stĺpec: Časové obdobie, Hľadanie slova, Krajiny -->
-        <div class="lg:col-span-1 space-y-5">
+        <!-- Ľavý stĺpec: Časové obdobie, Hľadanie slova, Krajiny (na mobile podpora skrytia) -->
+        <div id="feed-sidebar-col" class="lg:col-span-1 space-y-5 transition-all duration-300">
             
             <!-- ČASOVÝ OVLÁDACÍ PANEL (Na mobile zbalený s rozklikom) -->
             <div class="glass-panel p-4 rounded-xl flex flex-col">
@@ -188,8 +188,18 @@
                 </div>
             </div>
 
-            <!-- ANALÝZA FREKVENCIE SLOVA -->
-            <div class="glass-panel p-4 rounded-xl">
+            <!-- ANALÝZA FREKVENCIE SLOVA (Na mobile zbalené s rozklikom) -->
+            <div id="feed-search-panel" class="glass-panel p-4 rounded-xl flex flex-col">
+                <div class="flex items-center justify-between cursor-pointer md:cursor-default" onclick="toggleFeedSearchMobile()">
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">🔍 Frekvencia Slova (Tep)</h3>
+                        <span class="text-[9px] text-white bg-[#990000] px-1.5 py-0.2 border border-white/20 font-telemetry">AI</span>
+                    </div>
+                    <button class="md:hidden text-xs text-white px-2 py-0.5 bg-black border border-white/20">
+                        <span id="feed-search-arrow">▼</span>
+                    </button>
+                </div>
+                <div id="feed-search-wrapper" class="hidden md:block mt-2.5">
                 <div class="flex items-center justify-between mb-2">
                     <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">🔍 Frekvencia Slova (Tep)</h3>
                     <span class="text-[10px] text-white bg-[#990000] px-1.5 py-0.5 rounded border border-white/20">Multilingual AI</span>
@@ -206,6 +216,7 @@
                     </div>
                     <div class="mt-1 text-[11px] text-gray-500" id="kw-expanded"></div>
                     <div class="mt-2 text-xs text-gray-300" id="kw-breakdown"></div>
+                </div>
                 </div>
             </div>
 
@@ -845,6 +856,61 @@
         }
 
         
+        
+        // ================= MOBILNÉ SKRÝVANIE PRI SCROLLOVANÍ (SMART HEADER & FILTERS) =================
+        let lastScrollTop = 0;
+        let isHeaderHidden = false;
+
+        function toggleFeedSearchMobile() {
+            if (window.innerWidth >= 768) return;
+            const wrapper = document.getElementById('feed-search-wrapper');
+            const arrow = document.getElementById('feed-search-arrow');
+            if (!wrapper) return;
+            const isHidden = wrapper.classList.contains('hidden');
+            if (isHidden) {
+                wrapper.classList.remove('hidden');
+                if (arrow) arrow.innerText = '▲';
+            } else {
+                wrapper.classList.add('hidden');
+                if (arrow) arrow.innerText = '▼';
+            }
+        }
+
+        function handleWindowScroll() {
+            if (window.innerWidth >= 768) return; // len na mobile
+            const st = window.pageYOffset || document.documentElement.scrollTop;
+            const header = document.getElementById('main-header');
+            const sidebar = document.getElementById('feed-sidebar-col');
+            if (!header) return;
+
+            // Minimálny posun pre aktiváciu (aby to nekmitalo pri drobných dotykoch)
+            if (Math.abs(lastScrollTop - st) <= 10) return;
+
+            if (st > lastScrollTop && st > 80) {
+                // SCROLL DOLE: Skryjeme horné menu aby články mali celú obrazovku
+                if (!isHeaderHidden) {
+                    header.style.transform = 'translateY(-100%)';
+                    if (sidebar) {
+                        // Na mobile jemne zbalíme a stlmíme bočné filtre
+                        sidebar.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+                    }
+                    isHeaderHidden = true;
+                }
+            } else if (st < lastScrollTop) {
+                // SCROLL HORE: Okamžite vrátime menu a filtre späť
+                if (isHeaderHidden) {
+                    header.style.transform = 'translateY(0)';
+                    if (sidebar) {
+                        sidebar.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+                    }
+                    isHeaderHidden = false;
+                }
+            }
+            lastScrollTop = st <= 0 ? 0 : st;
+        }
+
+        window.addEventListener('scroll', handleWindowScroll, { passive: true });
+
         function toggleFeedPeriodMobile() {
             if (window.innerWidth >= 768) return;
             const wrapper = document.getElementById('feed-period-wrapper');
