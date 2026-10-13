@@ -2,6 +2,11 @@
 Asynchronny zberac spravodajskych RSS feedov A VEREJNYCH TELEGRAM KANALOV pre Spravodajsky Tep Sveta.
 Podporuje standardne RSS/Atom feedy aj t.me/s/<channel> HTML preview.
 """
+import sys
+def print_flush(*args, **kwargs):
+    kwargs['flush'] = True
+    print(*args, **kwargs)
+
 import asyncio
 import aiohttp
 import feedparser
@@ -34,7 +39,7 @@ def parse_views_count(view_str: str) -> int:
             return int(float(v.replace('K', '')) * 1000)
         elif 'M' in v:
             return int(float(v.replace('M', '')) * 1000000)
-        return int(re.sub(r'[^\d]', '', v) or 0)
+        return int(v)
     except Exception:
         return 0
 
@@ -53,7 +58,7 @@ async def fetch_source(session: aiohttp.ClientSession, media: Dict[str, Any]) ->
         return media, None
 
 def get_active_media() -> List[Dict[str, Any]]:
-    conn = sqlite3.connect(DB_PATH, timeout=60.0)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     cur.execute("SELECT id, country_iso, name, rss_url, category FROM media_outlets WHERE is_active = 1 AND rss_url IS NOT NULL")
@@ -62,7 +67,7 @@ def get_active_media() -> List[Dict[str, Any]]:
     return rows
 
 def get_active_alerts() -> List[Dict[str, Any]]:
-    conn = sqlite3.connect(DB_PATH, timeout=60.0)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     cur.execute("SELECT id, name, query_pattern FROM alerts WHERE is_active = 1")
@@ -73,16 +78,19 @@ def get_active_alerts() -> List[Dict[str, Any]]:
 async def collect_all():
     media_list = get_active_media()
     alerts = get_active_alerts()
-    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Spúšťam zber pre {len(media_list)} médií a Telegram kanálov...")
+    print_flush(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Spúšťam zber pre {len(media_list)} médií a Telegram kanálov...")
 
     connector = aiohttp.TCPConnector(limit=30, ssl=False)
     async with aiohttp.ClientSession(connector=connector) as session:
         tasks = [fetch_source(session, m) for m in media_list]
         results = await asyncio.gather(*tasks)
 
+    # Otvoríme databázu
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
+    cur = conn.cursor()
+
     new_articles_count = 0
     alert_hits_count = 0
-    active_alerts = get_active_alerts()
 
     for media, raw_content in results:
         if not raw_content:
@@ -106,19 +114,18 @@ async def collect_all():
                     if not full_text:
                         continue
                     
-                    # Titulok ako prvá veta alebo prvých 100 znakov
-                    first_line = full_text.split('\n')[0].strip()
-                    first_sentence = re.split(r'[.!?]', first_line)[0].strip()
-                    title = first_sentence if len(first_sentence) > 15 else first_line[:120]
-                    if not title:
-                        title = full_text[:120]
+                    lines = [line.strip() for line in full_text.split('\n') if line.strip()]
+                    title = lines[0] if lines else full_text[:120]
+                    if len(title) > 160:
+                        title = title[:157] + '...'
+
+                    post_link_el = m.find('a', class_='tgme_widget_message_date')
+                    post_url = post_link_el['href'] if post_link_el and post_link_el.has_attr('href') else rss_url
+
+                    views_el = m.find('span', class_='tgme_widget_message_views')
+                    views_count = parse_views_count(views_el.text) if views_el else 0
 
                     date_el = m.find('time', class_='time')
-                    views_el = m.find('span', class_='tgme_widget_message_views')
-                    link_el = m.find('a', class_='tgme_widget_message_date')
-                    post_url = link_el['href'] if link_el else f"{rss_url}/{hashlib.md5(full_text.encode()).hexdigest()}"
-                    
-                    views_count = parse_views_count(views_el.text) if views_el else 0
                     published = date_el['datetime'] if date_el and date_el.has_attr('datetime') else datetime.datetime.utcnow().isoformat()
                     guid = post_url
 
@@ -174,12 +181,16 @@ async def collect_all():
                 full_text = item['full_text']
                 views = item['views']
 
-                # Clamp future published dates to current time so they don't block the feed
                 now_iso = datetime.datetime.utcnow().isoformat()
                 if published and published > now_iso:
                     published = now_iso
 
-                # Okamžitý inline preklad nového titulku priamo pri zbere (nulové čakanie pre používateľa)
+                # Rýchla kontrola, či guid už v DB existuje
+                cur.execute("SELECT id FROM articles WHERE guid = ? LIMIT 1", (guid,))
+                if cur.fetchone():
+                    continue
+
+                # Preklad nového článku
                 c_iso = media.get('country_iso', '')
                 t_sk = None
                 t_en = None
@@ -205,32 +216,39 @@ async def collect_all():
                     """, (media['id'], media['country_iso'], guid, link, title, t_sk, t_en, perex, full_text, published, views))
                     article_id = cur.lastrowid
                     new_articles_count += 1
+                    conn.commit() # Commitneme každý nový článok okamžite!
 
-                    # Kontrola alertov s presnou extrakciou zachyteneho slova
-                    search_str = f"{title} {perex} {full_text or ''}".lower()
+                    # Kontrola alertov
+                    searched_text = (title + " " + (perex or "")).lower()
                     for alert in alerts:
-                        pattern = alert['query_pattern']
-                        match = re.search(r'\b(' + pattern + r')\b', search_str, re.IGNORECASE)
-                        if match:
-                            found_keyword = match.group(0)
+                        query_p = alert['query_pattern'].lower()
+                        terms = [t.strip() for t in query_p.replace(';', '|').replace(',', '|').split('|') if t.strip()]
+                        matched_word = None
+                        for term in terms:
+                            if term in searched_text:
+                                matched_word = term
+                                break
+
+                        if matched_word:
                             cur.execute("""
-                                INSERT OR IGNORE INTO alert_hits (alert_id, article_id, matched_text)
+                                INSERT OR IGNORE INTO alert_hits (alert_id, article_id, matched_term)
                                 VALUES (?, ?, ?)
-                            """, (alert['id'], article_id, found_keyword))
+                            """, (alert['id'], article_id, matched_word))
                             alert_hits_count += 1
-                            print(f"🚨 [ALARM: {alert['name']} | '{found_keyword}'] ({media['country_iso']} - {media['name']}): {title[:80]}")
+                            conn.commit()
+                            print_flush(f"🚨 [ALARM: {alert['name']} | '{matched_word}'] ({media['country_iso']} - {media['name']}): {title[:80]}")
 
                 except sqlite3.IntegrityError:
                     pass
 
             cur.execute("UPDATE media_outlets SET last_scraped_at = CURRENT_TIMESTAMP WHERE id = ?", (media['id'],))
+            conn.commit()
 
         except Exception as e:
             continue
 
-    conn.commit()
     conn.close()
-    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Zber dokončený. Nových článkov/postov: {new_articles_count} | Odpálených alarmov: {alert_hits_count}")
+    print_flush(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Zber dokončený. Nových článkov/postov: {new_articles_count} | Odpálených alarmov: {alert_hits_count}")
     return new_articles_count, alert_hits_count
 
 if __name__ == '__main__':

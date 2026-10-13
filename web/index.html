@@ -311,8 +311,17 @@
                 </div>
 
                 <!-- Kontajner zásahov -->
-                <div class="space-y-2.5 overflow-y-auto max-h-[720px] pr-1 scrollbar-none" id="alarm-hits-container">
+                <div class="space-y-2.5 overflow-y-auto max-h-[640px] pr-1 scrollbar-none" id="alarm-hits-container">
                     <div class="text-xs font-telemetry text-gray-500 py-6 text-center">Inicializujem radar...</div>
+                </div>
+
+                <!-- Tlačidlo: Prejsť na 3D Glóbus (Pokračovanie článkov a depeší) -->
+                <div class="pt-3 border-t border-white/10 mt-3">
+                    <button onclick="switchView('globe')" class="w-full py-2.5 bg-[#990000] hover:bg-[#b30000] text-white text-xs font-telemetry font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition shadow-lg group">
+                        <span class="w-2 h-2 rounded-full bg-white group-hover:animate-ping"></span>
+                        <span>OTVORIŤ 3D GLÓBUS PULZ // DEPEŠE →</span>
+                    </button>
+                    <p class="text-[10px] text-gray-500 font-editorial italic text-center mt-1.5">Kliknutím otvoríš interaktívnu 3D planétu a kompletné depeše podľa krajín.</p>
                 </div>
             </div>
         </div>
