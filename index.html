@@ -2178,14 +2178,24 @@
                 const tbody = document.getElementById('alerts-table-body');
                 let rowsHtml = '';
                 alerts.forEach(al => {
+                    const isCommunity = al.community_proposal_id ? true : false;
+                    const typeBadge = isCommunity 
+                        ? `<span class="px-1.5 py-0.5 text-[9px] bg-[#990000] text-white font-bold font-telemetry uppercase tracking-wider">⚡ HLAS ĽUDU (${al.author_nick || 'Komunita'})</span>`
+                        : `<span class="px-1.5 py-0.5 text-[9px] bg-white/10 text-gray-300 font-telemetry uppercase">SYSTÉMOVÝ</span>`;
+
                     rowsHtml += `
-                        <tr class="hover:bg-gray-900/50">
-                            <td class="py-2.5 px-3 font-semibold text-white">${al.name}</td>
-                            <td class="py-2.5 px-3 font-mono text-[11px] text-white max-w-xs truncate" title="${al.query_pattern}">${al.query_pattern}</td>
-                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-red-950 text-red-300 font-bold border border-red-800">${al.hit_count}</span></td>
-                            <td class="py-2.5 px-3"><span class="text-white font-semibold">Aktívny</span></td>
+                        <tr class="hover:bg-gray-900/50 border-b border-white/5">
+                            <td class="py-2.5 px-3 font-semibold text-white">
+                                <div class="flex items-center gap-2">
+                                    <span>${al.name}</span>
+                                    ${typeBadge}
+                                </div>
+                            </td>
+                            <td class="py-2.5 px-3 font-mono text-[11px] text-gray-300 max-w-xs truncate" title="${al.query_pattern}">${al.query_pattern}</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-red-950 text-red-300 font-bold border border-red-800 font-telemetry">${al.hit_count}</span></td>
+                            <td class="py-2.5 px-3"><span class="text-green-400 font-semibold text-xs font-telemetry">● Aktívny</span></td>
                             <td class="py-2.5 px-3 text-right">
-                                <button onclick="deleteAlert(${al.id})" class="px-2 py-1 bg-red-900/60 hover:bg-red-800 text-red-200 rounded text-[11px] transition">Zmazať</button>
+                                <button onclick="deleteAlert(${al.id})" class="px-2.5 py-1 bg-red-900/60 hover:bg-red-800 text-red-200 rounded text-[11px] transition font-telemetry">Zmazať</button>
                             </td>
                         </tr>
                     `;
