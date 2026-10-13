@@ -139,6 +139,10 @@
                 <span>KNIŽNICA</span>
                 <span id="badge-favorites-count" class="bg-gray-200 text-black px-1.5 py-0.2 text-[9px] md:text-[10px] font-mono">0</span>
             </button>
+            <button onclick="switchView('community')" id="tab-community" class="text-black hover:text-[#990000] px-2.5 md:px-3 py-1.5 transition flex items-center gap-1.5 shrink-0 whitespace-nowrap font-bold">
+                <span class="w-2 h-2 rounded-full bg-[#990000] animate-pulse"></span>
+                <span>ALARMY HLASOVANIA</span>
+            </button>
             <button onclick="switchView('alerts')" id="tab-alerts" class="admin-only hidden text-black hover:text-[#990000] px-2.5 md:px-3 py-1.5 transition flex items-center gap-1 md:gap-1.5 shrink-0 whitespace-nowrap">
                 <span>ALARMY</span>
                 <span id="badge-alerts-count" class="bg-black text-white px-1.5 py-0.2 text-[9px] md:text-[10px] font-mono">0</span>
@@ -565,23 +569,15 @@
         </div>
 
         
-        <!-- Rýchle Radarové Filtre (Možnosť B: Hotové tagy bez zaťaženia servera) -->
+        <!-- Rýchle Radarové Filtre zo skutočného zoznamu alarmov -->
         <div class="bg-[#000000] px-4 py-2.5 rounded-xl border border-white/10 flex flex-wrap items-center gap-2 text-xs font-telemetry">
             <span class="text-gray-400 uppercase font-bold text-[11px] flex items-center gap-1.5 mr-1">
                 <span class="w-2 h-2 rounded-full bg-[#990000]"></span>
-                RADAR TÉMY:
+                RADAR ALARMY:
             </span>
-            <button onclick="setGlobeQuickTag('')" id="gtag-all" class="globe-tag-btn px-2.5 py-1 rounded bg-[#990000] text-white font-bold transition text-[11px] border border-white/20">VŠETKO</button>
-            <button onclick="setGlobeQuickTag('vojna')" id="gtag-vojna" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">⚔️ VOJNA</button>
-            <button onclick="setGlobeQuickTag('jadrové')" id="gtag-jadrove" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">☢️ JADRO</button>
-            <button onclick="setGlobeQuickTag('ropa')" id="gtag-ropa" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🛢️ ROPA</button>
-            <button onclick="setGlobeQuickTag('zlato')" id="gtag-zlato" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🪙 ZLATO</button>
-            <button onclick="setGlobeQuickTag('ai')" id="gtag-ai" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🤖 AI</button>
-            <button onclick="setGlobeQuickTag('plyn')" id="gtag-plyn" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🔥 PLYN</button>
-            <button onclick="setGlobeQuickTag('drony')" id="gtag-drony" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🛰️ DRONY</button>
-            <button onclick="setGlobeQuickTag('inflácia')" id="gtag-inflacia" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">📈 INFLÁCIA</button>
-            <button onclick="setGlobeQuickTag('sankcie')" id="gtag-sankcie" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🚫 SANKCIE</button>
-            <button onclick="setGlobeQuickTag('voľby')" id="gtag-volby" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🗳️ VOĽBY</button>
+            <div id="globe-radar-tags-container" class="flex flex-wrap items-center gap-1.5">
+                <button onclick="setGlobeAlertFilter('', '')" id="gfilter-all" class="globe-tag-btn px-2.5 py-1 rounded bg-[#990000] text-white font-bold transition text-[11px] border border-white/20">VŠETKO</button>
+            </div>
         </div>
 
         <!-- 3D Glóbus Plátno & Bočný Panel Informácií (Rozdelenie podľa Esquire Intel) -->
@@ -2487,6 +2483,7 @@
         }
 
         async function initOrUpdateGlobe() {
+            loadGlobeRadarAlerts();
             try {
                 fetch('/api/alerts').then(r => r.json()).then(al => { cachedSystemAlerts = al; renderRadarActiveWords(); }).catch(() => {});
                 let url = `/api/countries?period=${globePeriod}&alerts_only=true`;
@@ -3476,6 +3473,63 @@
             loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
         }
 
+        
+        let activeGlobeAlertId = '';
+        let activeGlobeAlertPattern = '';
+
+        async function loadGlobeRadarAlerts() {
+            try {
+                const res = await fetch('/api/alerts');
+                const alerts = await res.json();
+                const container = document.getElementById('globe-radar-tags-container');
+                if (!container) return;
+
+                let html = `<button onclick="setGlobeAlertFilter('', '')" id="gfilter-all" class="globe-tag-btn px-2.5 py-1 rounded ${!activeGlobeAlertId ? 'bg-[#990000] text-white font-bold border-white/20' : 'bg-white/5 text-gray-300 border-white/10'} transition text-[11px] border">VŠETKO</button>`;
+                
+                alerts.forEach(al => {
+                    const isSelected = activeGlobeAlertId == al.id;
+                    const isCommunity = al.community_proposal_id ? '⚡ ' : '';
+                    html += `
+                        <button onclick="setGlobeAlertFilter('${al.id}', '${escapeHtml(al.query_pattern)}', '${escapeHtml(al.name)}')" 
+                                id="gfilter-${al.id}" 
+                                class="globe-tag-btn px-2.5 py-1 rounded ${isSelected ? 'bg-[#990000] text-white font-bold border-white/20' : 'bg-white/5 hover:bg-white/10 text-gray-300 border-white/10'} transition text-[11px] border whitespace-nowrap">
+                            ${isCommunity}${escapeHtml(al.name)}
+                        </button>
+                    `;
+                });
+                container.innerHTML = html;
+            } catch(e) {
+                console.error("Chyba načítania alarmov pre glóbus:", e);
+            }
+        }
+
+        function setGlobeAlertFilter(alertId, pattern, name) {
+            activeGlobeAlertId = alertId;
+            activeGlobeAlertPattern = pattern;
+            globeQuery = pattern ? pattern : '';
+
+            document.querySelectorAll('.globe-tag-btn').forEach(b => {
+                b.classList.remove('bg-[#990000]', 'text-white', 'font-bold', 'border-white/20');
+                b.classList.add('bg-white/5', 'text-gray-300', 'border-white/10');
+            });
+            const activeBtn = document.getElementById(alertId ? `gfilter-${alertId}` : 'gfilter-all');
+            if (activeBtn) {
+                activeBtn.classList.add('bg-[#990000]', 'text-white', 'font-bold', 'border-white/20');
+                activeBtn.classList.remove('bg-white/5', 'text-gray-300', 'border-white/10');
+            }
+
+            const badge = document.getElementById('globe-active-word-badge');
+            if (name) {
+                if (badge) badge.classList.remove('hidden');
+                const badgeText = document.getElementById('globe-active-word-text');
+                if (badgeText) badgeText.innerText = name.toUpperCase();
+            } else {
+                if (badge) badge.classList.add('hidden');
+            }
+
+            initOrUpdateGlobe();
+        }
+    
         function setGlobeQuickTag(tag) {
             globeQuery = tag;
             document.querySelectorAll('.globe-tag-btn').forEach(b => {
