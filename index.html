@@ -920,78 +920,63 @@
     </div>
 
     <!-- MODAL POPUP OKNO: RADAR ALARMY // VÝBER AKTÍVNYCH TÉM PRE 3D GLÓBUS -->
-    <div id="radar-words-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white text-black border-2 border-black w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative">
+        <!-- MODAL POPUP OKNO: RADAR ALARMY (ČISTÝ VÝBER ALARMOV) -->
+    <div id="radar-words-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+        <div class="bg-white text-black border-2 border-black w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl relative">
+            
             <!-- Modal Header -->
-            <div class="p-5 border-b-2 border-black flex justify-between items-center bg-gray-50">
-                <div>
-                    <span class="text-[10px] font-telemetry uppercase tracking-widest text-[#990000] font-bold block">FILTER CENTRÁLA // ESQUIRE INTEL</span>
-                    <h3 class="text-2xl font-headline tracking-wide uppercase text-black font-bold">VÝBER KĽÚČOVÝCH SLOV A ALARMOV</h3>
+            <div class="p-4 sm:p-5 border-b-2 border-black flex justify-between items-center bg-gray-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-1.5 h-7 bg-[#990000]"></div>
+                    <div>
+                        <span class="text-[9.5px] font-telemetry uppercase tracking-widest text-[#990000] font-bold block">3D GLÓBUS // TELEMETRIA</span>
+                        <h3 class="text-xl sm:text-2xl font-headline tracking-wide uppercase text-black font-bold">RADAR ALARMY</h3>
+                    </div>
                 </div>
                 <button onclick="closeRadarWordsModal()" class="w-8 h-8 flex items-center justify-center bg-black hover:bg-[#990000] text-white text-base font-bold transition">
                     ✕
                 </button>
             </div>
 
-            <!-- Modal Controls -->
-            <div class="p-4 bg-gray-100 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+            <!-- Modal Controls: Rýchle prepnutie VŠETKO / ZRUŠIŤ -->
+            <div class="p-3 sm:p-4 bg-gray-100 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2.5">
                 <div class="flex items-center gap-2">
-                    <button onclick="selectAllRadarWords()" class="px-3 py-1.5 bg-[#990000] hover:bg-[#b30000] text-white text-xs font-telemetry font-bold uppercase transition flex items-center gap-1.5">
-                        <span>⚡</span> ZAPNÚŤ VŠETKY SLOVÁ
+                    <button onclick="clearRadarFilter(); renderRadarModalContent();" class="px-3 py-1.5 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase transition flex items-center gap-1.5 shadow-sm">
+                        <span>✕</span> ZOBRAZIŤ VŠETKO
                     </button>
-                    <button onclick="clearRadarFilter()" class="px-3 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-telemetry font-bold uppercase transition flex items-center gap-1.5">
-                        <span>✕</span> ZRUŠIŤ VÝBER (ZOBRAZIŤ VŠETKO)
+                    <button onclick="selectAllRadarWords()" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-black text-xs font-telemetry font-bold uppercase transition border border-gray-300">
+                        ZAPNÚŤ VŠETKY
                     </button>
                 </div>
-                <div class="text-[11px] font-telemetry text-gray-600 font-bold" id="modal-words-status-text">
-                    Stav: Zobrazujú sa všetky správy
+                <div class="text-[11px] font-telemetry text-gray-700 font-bold" id="modal-words-status-text">
+                    Stav: VŠETKY ALARMY
                 </div>
             </div>
 
-            <!-- Modal Form pre pridanie vlastného slova -->
-            <div class="p-4 border-b border-gray-200 bg-white">
-                <span class="text-[10px] font-telemetry uppercase text-gray-500 font-bold block mb-1.5">➕ PRIDAŤ VLASTNÉ SLEDOVANÉ SLOVO</span>
-                <div class="flex items-center gap-2">
-                    <input type="text" id="modal-radar-new-word-input" placeholder="Zadaj vlastné slovo (napr. Fúzia, čipy, Boeing)..." 
-                           class="flex-1 bg-gray-50 border border-gray-300 px-3 py-2 text-xs text-black focus:outline-none focus:border-[#990000] font-mono"
-                           onkeydown="if(event.key === 'Enter') addRadarCustomWordFromModal()">
-                    <button onclick="addRadarCustomWordFromModal()" class="px-4 py-2 bg-black hover:bg-[#990000] font-bold text-white text-xs transition uppercase font-telemetry">
-                        PRIDAŤ SLOVO
-                    </button>
-                </div>
-            </div>
-
-            <!-- Modal Body: Zoznam všetkých alarmov a tagov s prepínačmi -->
-            <div class="flex-1 overflow-y-auto p-5 space-y-4 max-h-[420px]">
-                <div>
-                    <span class="text-[11px] font-headline uppercase text-black font-bold tracking-wider block mb-2">
-                        🚨 VŠETKY RADAROVÉ ALARMY (SYSTÉMOVÉ & KOMUNITNÉ):
+            <!-- Modal Body: Čisté tlačidlá alarmov (kliknutím zapínaš / vypínaš) -->
+            <div class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
+                <div class="flex justify-between items-center pb-1 border-b border-gray-200">
+                    <span class="text-[10.5px] font-headline uppercase text-gray-500 font-bold tracking-wider">
+                        KLIKNUTÍM VYBER JEDEN ALEBO VIAC ALARMOV:
                     </span>
-                    <div id="modal-preset-alerts-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <!-- Naplní JS -->
-                    </div>
+                    <span class="text-[10px] font-telemetry text-gray-400">ON / OFF</span>
                 </div>
-
-                <div id="modal-custom-words-section" class="border-t border-gray-200 pt-3">
-                    <span class="text-[11px] font-headline uppercase text-black font-bold tracking-wider block mb-2">
-                        🎯 TVOJE VLASTNÉ PRIDANÉ SLOVÁ:
-                    </span>
-                    <div id="modal-custom-words-grid" class="flex flex-wrap gap-2">
-                        <!-- Naplní JS -->
-                    </div>
+                <div id="modal-preset-alerts-grid" class="flex flex-wrap gap-2 pt-1">
+                    <!-- Naplní JS čistými tlačidlami -->
                 </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="p-4 bg-gray-50 border-t-2 border-black flex justify-between items-center">
-                <span class="text-[10px] font-telemetry text-gray-500">
-                    Tip: Keď je výber zrušený, systém automaticky zobrazuje správy zo všetkých tém.
+            <div class="p-3 sm:p-4 bg-gray-50 border-t-2 border-black flex justify-between items-center">
+                <span class="text-[10px] font-telemetry text-gray-500 italic">
+                    Tip: Keď nie je zvolený žiaden filter, radar sleduje všetky alarmy naraz.
                 </span>
-                <button onclick="closeRadarWordsModal()" class="px-5 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase transition">
-                    HOTOVO / ZAVRIEŤ
+                <button onclick="closeRadarWordsModal()" class="px-5 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase transition shadow-md">
+                    HOTOVO / POUŽIŤ
                 </button>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- MODAL OKNO: PLNÝ PREPIS ČLÁNKU SO ZVÝRAZNENÍM RADAROV A PREKLADMI -->
@@ -3081,73 +3066,65 @@
 
         function renderRadarModalContent() {
             const presetGrid = document.getElementById('modal-preset-alerts-grid');
-            const customGrid = document.getElementById('modal-custom-words-grid');
-            const customSection = document.getElementById('modal-custom-words-section');
             const statusText = document.getElementById('modal-words-status-text');
 
             if (statusText) {
-                if (radarActiveFilterWords.size === 0) {
-                    statusText.innerHTML = '<span class="text-black font-bold">Stav: VŠETKY SLOVÁ (Filter vypnutý)</span>';
+                if (radarActiveFilterWords.size === 0 && !activeGlobeAlertId) {
+                    statusText.innerHTML = '<span class="text-black font-bold">Stav: VŠETKY ALARMY (Bez filtra)</span>';
                 } else {
-                    statusText.innerHTML = `<span class="text-[#990000] font-bold">Aktívny výber: ${radarActiveFilterWords.size} vybraných tém</span>`;
+                    const count = radarActiveFilterWords.size + (activeGlobeAlertId ? 1 : 0);
+                    statusText.innerHTML = `<span class="text-[#990000] font-bold">Vybrané: ${count} alarmov</span>`;
                 }
             }
 
-            // Systémové alarmy
             if (presetGrid) {
                 if (!cachedSystemAlerts || cachedSystemAlerts.length === 0) {
-                    presetGrid.innerHTML = '<div class="text-xs text-gray-500">Načítavam alarmy...</div>';
+                    presetGrid.innerHTML = '<div class="text-xs text-gray-500 py-4">Načítavam alarmy...</div>';
                 } else {
                     let html = '';
                     cachedSystemAlerts.forEach(al => {
-                        const isSelected = isWordActiveInFilter(al.name);
+                        const isSelected = isWordActiveInFilter(al.name) || activeGlobeAlertId == al.id;
+                        const isComm = al.community_proposal_id ? '⚡ ' : '';
+                        const hitsBadge = al.hit_count !== undefined 
+                            ? `<span class="px-1.5 py-0.2 text-[9.5px] font-mono font-bold ${isSelected ? 'bg-white text-black' : 'bg-black text-white'}">${al.hit_count}</span>` 
+                            : '';
+                        
                         html += `
-                            <button onclick="toggleRadarFilterWord('${al.name.replace(/'/g, "\'")}'); renderRadarModalContent();" 
-                                    class="p-2.5 text-left border text-xs font-telemetry flex items-center justify-between transition ${
+                            <button onclick="toggleRadarAlertButton('${al.id}', '${al.name.replace(/'/g, "\\'")}', '${(al.query_pattern || '').replace(/'/g, "\\")}'); renderRadarModalContent();" 
+                                    class="px-3 py-2 text-xs font-telemetry flex items-center gap-2 border transition cursor-pointer select-none ${
                                         isSelected 
-                                        ? 'bg-[#990000] border-[#990000] text-white font-bold shadow-md' 
-                                        : 'bg-white hover:bg-gray-100 border-gray-300 text-black'
+                                        ? 'bg-[#990000] border-[#990000] text-white font-bold shadow-md ring-2 ring-[#990000]/40' 
+                                        : 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-black'
                                     }">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 ${isSelected ? 'bg-white' : 'bg-[#990000]'}"></span>
-                                    <span>${al.name}</span>
-                                </div>
-                                <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 ${isSelected ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'}">
-                                    ${isSelected ? 'ON' : 'OFF'}
-                                </span>
+                                <span class="w-2 h-2 rounded-full ${isSelected ? 'bg-white animate-pulse' : 'bg-[#990000]'}"></span>
+                                <span class="uppercase font-bold tracking-wide">${isComm}${escapeHtml(al.name)}</span>
+                                ${hitsBadge}
+                                <span class="text-[9px] uppercase font-bold ml-1 ${isSelected ? 'text-white' : 'text-gray-400'}">${isSelected ? 'ON ✓' : ''}</span>
                             </button>
                         `;
                     });
                     presetGrid.innerHTML = html;
                 }
             }
+        }
 
-            // Custom pridané slová
-            const customWords = getRadarCustomWords();
-            if (customSection && customGrid) {
-                if (customWords.length === 0) {
-                    customSection.classList.add('hidden');
-                } else {
-                    customSection.classList.remove('hidden');
-                    let html = '';
-                    customWords.forEach(cw => {
-                        const isSelected = isWordActiveInFilter(cw);
-                        html += `
-                            <div class="inline-flex items-center border ${
-                                isSelected ? 'bg-[#990000] border-[#990000] text-white font-bold' : 'bg-gray-100 border-gray-300 text-black'
-                            } text-xs font-telemetry">
-                                <button onclick="toggleRadarFilterWord('${cw.replace(/'/g, "\'")}'); renderRadarModalContent();" class="px-2.5 py-1 flex items-center gap-1.5">
-                                    <span>${cw}</span>
-                                    <span class="text-[9px] font-bold ${isSelected ? 'text-white' : 'text-gray-400'}">(${isSelected ? 'ON' : 'OFF'})</span>
-                                </button>
-                                <button onclick="removeRadarCustomWord('${cw.replace(/'/g, "\'")}', event); renderRadarModalContent();" 
-                                        class="px-2 py-1 border-l ${isSelected ? 'border-red-400 hover:bg-black' : 'border-gray-300 hover:bg-red-600 hover:text-white'} transition text-[10px]" title="Zmazať slovo">✕</button>
-                            </div>
-                        `;
-                    });
-                    customGrid.innerHTML = html;
-                }
+        function toggleRadarAlertButton(alertId, alertName, pattern) {
+            if (activeGlobeAlertId == alertId) {
+                activeGlobeAlertId = '';
+                activeGlobeAlertPattern = '';
+                globeQuery = '';
+                radarActiveFilterWords.delete(alertName);
+            } else {
+                activeGlobeAlertId = alertId;
+                activeGlobeAlertPattern = pattern;
+                globeQuery = pattern;
+                radarActiveFilterWords.clear();
+                radarActiveFilterWords.add(alertName);
             }
+
+            renderRadarActiveWords();
+            initOrUpdateGlobe();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
         }
 
         function renderRadarActiveWords() {
