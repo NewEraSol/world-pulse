@@ -1047,28 +1047,71 @@
             }
         }
 
+        function parseUtcDate(dateVal) {
+            if (!dateVal) return null;
+            let s = String(dateVal).trim();
+            // Ak reťazec nemá explicitné časové pásmo (ani Z ani +/-), databáza ho ukladá v UTC
+            if (!s.endsWith('Z') && !s.includes('+') && !/[-+]\d\d:\d\d/.test(s)) {
+                s = s.replace(' ', 'T') + 'Z';
+            } else if (s.includes(' ') && !s.includes('T')) {
+                s = s.replace(' ', 'T');
+            }
+            const d = new Date(s);
+            return isNaN(d.getTime()) ? new Date(dateVal) : d;
+        }
+
         function formatTelemetryDate(dateVal) {
             if (!dateVal) return '';
-            const d = new Date(dateVal);
-            if (isNaN(d.getTime())) return '';
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            const mins = String(d.getMinutes()).padStart(2, '0');
-            return `${day}.${month}. ${hours}:${mins}`;
+            const d = parseUtcDate(dateVal);
+            if (!d || isNaN(d.getTime())) return '';
+            try {
+                const parts = new Intl.DateTimeFormat('sk-SK', {
+                    timeZone: 'Europe/Bratislava',
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                }).formatToParts(d);
+                const map = {};
+                parts.forEach(p => map[p.type] = p.value);
+                return `${map.day}.${map.month}. ${map.hour}:${map.minute}`;
+            } catch(e) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const hours = String(d.getHours()).padStart(2, '0');
+                const mins = String(d.getMinutes()).padStart(2, '0');
+                return `${day}.${month}. ${hours}:${mins}`;
+            }
         }
 
         function formatTelemetryDateFull(dateVal) {
             if (!dateVal) return '';
-            const d = new Date(dateVal);
-            if (isNaN(d.getTime())) return '';
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            const hours = String(d.getHours()).padStart(2, '0');
-            const mins = String(d.getMinutes()).padStart(2, '0');
-            const secs = String(d.getSeconds()).padStart(2, '0');
-            return `${day}.${month}.${year} ${hours}:${mins}:${secs}`;
+            const d = parseUtcDate(dateVal);
+            if (!d || isNaN(d.getTime())) return '';
+            try {
+                const parts = new Intl.DateTimeFormat('sk-SK', {
+                    timeZone: 'Europe/Bratislava',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).formatToParts(d);
+                const map = {};
+                parts.forEach(p => map[p.type] = p.value);
+                return `${map.day}.${map.month}.${map.year} ${map.hour}:${map.minute}:${map.second}`;
+            } catch(e) {
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                const hours = String(d.getHours()).padStart(2, '0');
+                const mins = String(d.getMinutes()).padStart(2, '0');
+                const secs = String(d.getSeconds()).padStart(2, '0');
+                return `${day}.${month}.${year} ${hours}:${mins}:${secs}`;
+            }
         }
 
 
