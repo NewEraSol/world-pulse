@@ -115,40 +115,40 @@
 <body class="min-h-screen flex flex-col">
 
     <!-- Presný biely Header podľa predlohy s červeným horným pásikom -->
-    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 px-8 py-0 flex flex-wrap justify-between items-center shadow-md relative">
+    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 md:px-8 py-0 flex flex-wrap justify-between items-center shadow-md relative">
         <!-- Červený pásik vľavo nad logom ako na predlohe -->
-        <div class="absolute top-0 left-8 w-44 h-1.5 bg-[#990000]"></div>
+        <div class="absolute top-0 left-4 md:left-8 w-36 md:w-44 h-1.5 bg-[#990000]"></div>
 
-        <div class="flex items-center space-x-6 py-4">
-            <div onclick="switchView('feed'); resetFilters();" class="flex items-center gap-3 cursor-pointer group select-none" title="Prejsť na Živý Tok Správ">
-                <h1 class="text-3xl font-headline uppercase text-black group-hover:text-[#990000] font-bold tracking-tight leading-none transition">
+        <div class="flex items-center space-x-4 md:space-x-6 py-2.5 md:py-4">
+            <div onclick="switchView('feed'); resetFilters();" class="flex items-center gap-2 md:gap-3 cursor-pointer group select-none" title="Prejsť na Živý Tok Správ">
+                <h1 class="text-2xl md:text-3xl font-headline uppercase text-black group-hover:text-[#990000] font-bold tracking-tight leading-none transition">
                     WORLD PULSE
                 </h1>
-                <span class="text-[10px] font-telemetry uppercase tracking-widest text-[#990000] font-bold border-l-2 border-[#990000] pl-2">TEP SVETA</span>
+                <span class="text-[9px] md:text-[10px] font-telemetry uppercase tracking-widest text-[#990000] font-bold border-l-2 border-[#990000] pl-1.5 md:pl-2">TEP SVETA</span>
             </div>
         </div>
 
-        <!-- Menu položky: Aktívna má červený podklad, ostatné čistý čierny text -->
-        <div class="flex items-center space-x-3 text-xs font-headline tracking-wider font-bold uppercase py-4">
-            <button onclick="switchView('feed')" id="tab-feed" class="active-tab px-3 py-1.5 transition">ŽIVÝ TOK</button>
-            <button onclick="switchView('globe')" id="tab-globe" class="text-black hover:text-[#990000] px-3 py-1.5 transition">3D GLÓBUS</button>
-            <button onclick="switchView('favorites')" id="tab-favorites" class="text-black hover:text-[#990000] px-3 py-1.5 transition flex items-center gap-1.5">
+        <!-- Menu položky: Responzívne na mobile scrollovateľné, na desktope čisté, ZDROJE vždy viditeľné -->
+        <div class="w-full md:w-auto overflow-x-auto flex items-center space-x-1.5 md:space-x-3 text-[11px] md:text-xs font-headline tracking-wider font-bold uppercase py-2 md:py-4 scrollbar-none order-3 md:order-2">
+            <button onclick="switchView('feed')" id="tab-feed" class="active-tab px-2.5 md:px-3 py-1.5 transition shrink-0 whitespace-nowrap">ŽIVÝ TOK</button>
+            <button onclick="switchView('globe')" id="tab-globe" class="text-black hover:text-[#990000] px-2.5 md:px-3 py-1.5 transition shrink-0 whitespace-nowrap">3D GLÓBUS</button>
+            <button onclick="switchView('favorites')" id="tab-favorites" class="text-black hover:text-[#990000] px-2.5 md:px-3 py-1.5 transition flex items-center gap-1 md:gap-1.5 shrink-0 whitespace-nowrap">
                 <span>KNIŽNICA</span>
-                <span id="badge-favorites-count" class="bg-gray-200 text-black px-1.5 py-0.2 text-[10px] font-mono">0</span>
+                <span id="badge-favorites-count" class="bg-gray-200 text-black px-1.5 py-0.2 text-[9px] md:text-[10px] font-mono">0</span>
             </button>
-            <button onclick="switchView('alerts')" id="tab-alerts" class="text-black hover:text-[#990000] px-3 py-1.5 transition flex items-center gap-1.5">
+            <button onclick="switchView('alerts')" id="tab-alerts" class="text-black hover:text-[#990000] px-2.5 md:px-3 py-1.5 transition flex items-center gap-1 md:gap-1.5 shrink-0 whitespace-nowrap">
                 <span>ALARMY</span>
-                <span id="badge-alerts-count" class="bg-black text-white px-1.5 py-0.2 text-[10px] font-mono">0</span>
+                <span id="badge-alerts-count" class="bg-black text-white px-1.5 py-0.2 text-[9px] md:text-[10px] font-mono">0</span>
             </button>
-            <button onclick="switchView('sources')" id="tab-sources" class="text-black hover:text-[#990000] px-3 py-1.5 transition">ZDROJE</button>
+            <button onclick="switchView('sources')" id="tab-sources" class="text-black hover:text-[#990000] px-2.5 md:px-3 py-1.5 transition shrink-0 whitespace-nowrap">ZDROJE</button>
         </div>
 
-        <!-- Telemetria vpravo v headeri -->
-        <div class="flex items-center gap-5 text-xs font-telemetry text-gray-600 py-4">
-            <div class="border-r border-gray-200 pr-3">ČLÁNKY: <span id="stat-articles" class="font-bold text-black">0</span></div>
-            <div class="border-r border-gray-200 pr-3">MÉDIÁ: <span id="stat-media" class="font-bold text-black">0</span></div>
+        <!-- Telemetria vpravo v headeri: Na mobile kompaktná, nezaberá zbytočné miesto -->
+        <div class="flex items-center gap-2 md:gap-5 text-[10px] md:text-xs font-telemetry text-gray-600 py-2 md:py-4 order-2 md:order-3">
+            <div class="border-r border-gray-200 pr-2 md:pr-3 hidden sm:block">ČLÁNKY: <span id="stat-articles" class="font-bold text-black">0</span></div>
+            <div class="border-r border-gray-200 pr-2 md:pr-3 hidden sm:block">MÉDIÁ: <span id="stat-media" class="font-bold text-black">0</span></div>
             <div>ALARMY: <span id="stat-alerts" class="font-bold text-[#990000]">0</span></div>
-            <button onclick="refreshData()" class="px-3 py-1 bg-black hover:bg-[#990000] text-white rounded text-[11px] font-bold transition">
+            <button onclick="refreshData()" class="px-2 md:px-3 py-1 bg-black hover:bg-[#990000] text-white rounded text-[10px] md:text-[11px] font-bold transition">
                 ↻
             </button>
         </div>
@@ -482,11 +482,12 @@
 
 
                 <!-- Časový filter -->
-                <div class="flex bg-[#000000] p-1 rounded-lg border border-white/10">
-                    <button onclick="setGlobePeriod('1h')" id="gp-1h" class="px-3 py-1 rounded hover:bg-white/10 text-gray-300 transition">1h</button>
-                    <button onclick="setGlobePeriod('6h')" id="gp-6h" class="px-3 py-1 rounded hover:bg-white/10 text-gray-300 transition">6h</button>
-                    <button onclick="setGlobePeriod('24h')" id="gp-24h" class="px-3 py-1 rounded bg-[#990000] text-white font-bold transition">24h</button>
-                    <button onclick="setGlobePeriod('all')" id="gp-all" class="px-3 py-1 rounded hover:bg-white/10 text-gray-300 transition">VŠETKO</button>
+                <div class="flex flex-wrap bg-[#000000] p-1 rounded-lg border border-white/10">
+                    <button onclick="setGlobePeriod('1h')" id="gp-1h" class="px-2.5 py-1 rounded hover:bg-white/10 text-gray-300 transition text-[11px] md:text-xs">1h</button>
+                    <button onclick="setGlobePeriod('6h')" id="gp-6h" class="px-2.5 py-1 rounded hover:bg-white/10 text-gray-300 transition text-[11px] md:text-xs">6h</button>
+                    <button onclick="setGlobePeriod('24h')" id="gp-24h" class="px-2.5 py-1 rounded bg-[#990000] text-white font-bold transition text-[11px] md:text-xs">24h</button>
+                    <button onclick="setGlobePeriod('7d')" id="gp-7d" class="px-2.5 py-1 rounded hover:bg-white/10 text-gray-300 transition text-[11px] md:text-xs">7d</button>
+                    <button onclick="setGlobePeriod('all')" id="gp-all" class="px-2.5 py-1 rounded hover:bg-white/10 text-gray-300 transition text-[11px] md:text-xs">VŠETKO</button>
                 </div>
 
                 <!-- Word Search priamo na Glóbuse -->
@@ -2679,7 +2680,7 @@
 
         function setGlobePeriod(p) {
             globePeriod = p;
-            ['1h', '6h', '24h', 'all'].forEach(k => {
+            ['1h', '6h', '24h', '7d', 'all'].forEach(k => {
                 const el = document.getElementById(`gp-${k}`);
                 if (el) {
                     el.classList.remove('bg-[#990000]', 'text-white', 'font-bold');
