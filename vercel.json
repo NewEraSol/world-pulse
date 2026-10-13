@@ -1,0 +1,9 @@
+{
+  "outputDirectory": "web",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://46.62.156.204:8085/api/:path*"
+    }
+  ]
+}

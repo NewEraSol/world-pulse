@@ -1,0 +1,2885 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Pulse | Spravodajský Tep Sveta</title>
+    <!-- Google Fonts: Oswald (Headlines), Newsreader (Editorial Serif), JetBrains Mono (Telemetry) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Cobe 3D Globe Library -->
+    <script type="module">
+        import createGlobe from "https://esm.sh/cobe";
+        window.createGlobe = createGlobe;
+    </script>
+    <style>
+        :root {
+            --blood-red: #990000;
+            --blood-red-bright: #b30000;
+            --pitch-black: #000000;
+            --pure-white: #ffffff;
+            --subtle-border: rgba(255, 255, 255, 0.12);
+        }
+        body { 
+            background-color: #000000; 
+            color: #ffffff; 
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .font-headline { font-family: 'Oswald', sans-serif; letter-spacing: 0.04em; }
+        .font-editorial { font-family: 'Newsreader', Georgia, serif; }
+        .font-telemetry { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Ostré hrany - žiadne zaoblenie, čistý architektúrny minimalizmus */
+        * {
+            border-radius: 0 !important;
+        }
+        
+        .glass-panel { 
+            background: #000000; 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+        }
+        .esq-panel {
+            background: #000000;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .active-tab { 
+            background-color: var(--blood-red) !important; 
+            color: #ffffff !important; 
+            font-weight: 700;
+        }
+        .time-pill.active { 
+            background-color: var(--blood-red) !important; 
+            color: #ffffff !important; 
+            border-color: var(--blood-red) !important; 
+        }
+        .modal-lang-tab.active { 
+            background-color: var(--blood-red) !important; 
+            color: #ffffff !important; 
+            border-bottom: 2px solid #ffffff !important; 
+            font-weight: bold; 
+        }
+        
+        .esquire-top-stripe {
+            height: 3px;
+            background: #990000;
+        }
+        
+        /* 21st.dev Cobe Globe Pulse Keyframes - Dark Red */
+        @keyframes pulse-expand {
+            0% { transform: scale(0.3); opacity: 0.9; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+        .cobe-pulse-marker {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.3s ease, transform 0.2s ease;
+        }
+        .cobe-pulse-marker:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+            z-index: 50;
+        }
+        .cobe-ring-1 {
+            position: absolute; inset: 0; border: 2px solid #990000; border-radius: 50%; opacity: 0;
+            animation: pulse-expand 2s ease-out infinite;
+        }
+        .cobe-ring-2 {
+            position: absolute; inset: 0; border: 2px solid #990000; border-radius: 50%; opacity: 0;
+            animation: pulse-expand 2s ease-out infinite 0.6s;
+        }
+        .cobe-core-dot {
+            width: 10px; height: 10px; background-color: #990000; border-radius: 50%;
+            box-shadow: 0 0 0 2px #0a0a0a, 0 0 0 4px #dc2626, 0 0 16px rgba(239, 68, 68, 1);
+        }
+
+        /* Zvýraznenie kľúčových slov z radaru */
+        .radar-highlight {
+            background-color: rgba(220, 38, 38, 0.35);
+            color: #fecaca;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 4px;
+            border: 1px solid rgba(239, 68, 68, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Presný biely Header podľa predlohy s červeným horným pásikom -->
+    <header class="sticky top-0 z-40 bg-white border-b border-gray-200 px-8 py-0 flex flex-wrap justify-between items-center shadow-md relative">
+        <!-- Červený pásik vľavo nad logom ako na predlohe -->
+        <div class="absolute top-0 left-8 w-44 h-1.5 bg-[#990000]"></div>
+
+        <div class="flex items-center space-x-6 py-4">
+            <div onclick="switchView('feed'); resetFilters();" class="flex items-center gap-3 cursor-pointer group select-none" title="Prejsť na Živý Tok Správ">
+                <h1 class="text-3xl font-headline uppercase text-black group-hover:text-[#990000] font-bold tracking-tight leading-none transition">
+                    WORLD PULSE
+                </h1>
+                <span class="text-[10px] font-telemetry uppercase tracking-widest text-[#990000] font-bold border-l-2 border-[#990000] pl-2">TEP SVETA</span>
+            </div>
+        </div>
+
+        <!-- Menu položky: Aktívna má červený podklad, ostatné čistý čierny text -->
+        <div class="flex items-center space-x-3 text-xs font-headline tracking-wider font-bold uppercase py-4">
+            <button onclick="switchView('feed')" id="tab-feed" class="active-tab px-3 py-1.5 transition">ŽIVÝ TOK</button>
+            <button onclick="switchView('globe')" id="tab-globe" class="text-black hover:text-[#990000] px-3 py-1.5 transition">3D GLÓBUS</button>
+            <button onclick="switchView('favorites')" id="tab-favorites" class="text-black hover:text-[#990000] px-3 py-1.5 transition flex items-center gap-1.5">
+                <span>KNIŽNICA</span>
+                <span id="badge-favorites-count" class="bg-gray-200 text-black px-1.5 py-0.2 text-[10px] font-mono">0</span>
+            </button>
+            <button onclick="switchView('alerts')" id="tab-alerts" class="text-black hover:text-[#990000] px-3 py-1.5 transition flex items-center gap-1.5">
+                <span>ALARMY</span>
+                <span id="badge-alerts-count" class="bg-black text-white px-1.5 py-0.2 text-[10px] font-mono">0</span>
+            </button>
+            <button onclick="switchView('sources')" id="tab-sources" class="text-black hover:text-[#990000] px-3 py-1.5 transition">ZDROJE</button>
+        </div>
+
+        <!-- Telemetria vpravo v headeri -->
+        <div class="flex items-center gap-5 text-xs font-telemetry text-gray-600 py-4">
+            <div class="border-r border-gray-200 pr-3">ČLÁNKY: <span id="stat-articles" class="font-bold text-black">0</span></div>
+            <div class="border-r border-gray-200 pr-3">MÉDIÁ: <span id="stat-media" class="font-bold text-black">0</span></div>
+            <div>ALARMY: <span id="stat-alerts" class="font-bold text-[#990000]">0</span></div>
+            <button onclick="refreshData()" class="px-3 py-1 bg-black hover:bg-[#990000] text-white rounded text-[11px] font-bold transition">
+                ↻
+            </button>
+        </div>
+    </header>
+
+    <!-- VIEW 1: ŽIVÝ TOK A ANALÝZA -->
+    <main id="view-feed" class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Ľavý stĺpec: Časové obdobie, Hľadanie slova, Krajiny -->
+        <div class="lg:col-span-1 space-y-5">
+            
+            <!-- ČASOVÝ OVLÁDACÍ PANEL -->
+            <div class="glass-panel p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-2.5">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">⏱️ Časové Obdobie</h3>
+                    <button onclick="resetFilters()" class="px-2 py-0.5 bg-[#990000] hover:bg-[#b30000] text-white rounded text-[10px] font-telemetry font-bold transition flex items-center gap-1 uppercase" title="Vynulovať všetky filtre a zobraziť všetko">
+                        <span>✕</span> Zrušiť filtre
+                    </button>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 text-xs">
+                    <button onclick="setPeriod('1h')" id="p-1h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">1 hodina</button>
+                    <button onclick="setPeriod('6h')" id="p-6h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">6 hodín</button>
+                    <button onclick="setPeriod('24h')" id="p-24h" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center active transition">24 hodín</button>
+                    <button onclick="setPeriod('7d')" id="p-7d" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">7 dní</button>
+                    <button onclick="setPeriod('30d')" id="p-30d" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">30 dní</button>
+                    <button onclick="setPeriod('all')" id="p-all" class="time-pill py-1.5 px-2 rounded bg-gray-900 border border-gray-800 hover:bg-gray-800 text-center transition">Všetko</button>
+                </div>
+            </div>
+
+            <!-- ANALÝZA FREKVENCIE SLOVA -->
+            <div class="glass-panel p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400">🔍 Frekvencia Slova (Tep)</h3>
+                    <span class="text-[10px] text-white bg-[#990000] px-1.5 py-0.5 rounded border border-white/20">Multilingual AI</span>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="keyword-input" placeholder="Zlato, ropa, Boeing..." onkeydown="if(event.key==='Enter') analyzeKeyword()" 
+                           class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-white/20">
+                    <button id="btn-kw-search" onclick="analyzeKeyword()" class="px-3.5 py-1.5 bg-[#990000] hover:bg-[#b30000] font-bold text-white text-xs transition uppercase font-telemetry flex items-center justify-center min-w-[75px] shadow-sm">Hľadať</button>
+                </div>
+                <div id="keyword-result" class="mt-3 hidden p-3 bg-gray-900/90 rounded-lg border border-gray-800">
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs text-gray-400">Výskyt vo zvolenom čase:</span>
+                        <span class="text-xl font-bold text-white" id="kw-total">0</span>
+                    </div>
+                    <div class="mt-1 text-[11px] text-gray-500" id="kw-expanded"></div>
+                    <div class="mt-2 text-xs text-gray-300" id="kw-breakdown"></div>
+                </div>
+            </div>
+
+            <!-- ZOZNAM KRAJÍN -->
+            <div class="glass-panel p-4 rounded-xl flex flex-col h-[480px]">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2.5">📍 Krajiny</h3>
+                <div class="flex-1 overflow-y-auto space-y-1 pr-1.5" id="country-list">
+                    <button onclick="filterCountry('')" class="w-full text-left px-3 py-1.5 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-xs flex justify-between">
+                        <span>Všetky krajiny</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Stredný stĺpec: ŽIVÝ TOK SPRÁV -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="glass-panel p-3.5 rounded-xl flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-1.5 h-6 bg-[#990000]"></div>
+                    <h2 class="text-lg font-headline uppercase tracking-wide text-white" id="feed-title">Globálny Tok Článkov</h2>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-telemetry bg-white/10 text-white px-2 py-0.5 border border-white/20" id="current-filter-badge">Všetky krajiny · 24 hodín</span>
+                        <button onclick="resetFilters()" class="px-2 py-0.5 bg-[#990000] hover:bg-[#b30000] text-white text-[10px] font-telemetry font-bold transition uppercase flex items-center gap-1" title="Zrušiť filtre">
+                            <span>✕</span> Zrušiť
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zoznam článkov -->
+            <div class="space-y-3 overflow-y-auto max-h-[820px] pr-2" id="articles-container">
+                <div class="py-20 px-6 flex flex-col items-center justify-center space-y-4 bg-[#11141a] border border-white/10">
+                    <div class="relative w-12 h-12 flex items-center justify-center">
+                        <div class="absolute inset-0 border-2 border-white/20 animate-ping opacity-25"></div>
+                        <div class="absolute inset-0 border-2 border-[#990000] animate-spin border-t-transparent"></div>
+                        <span class="w-3 h-3 bg-[#990000]"></span>
+                    </div>
+                    <div class="text-center font-telemetry">
+                        <span class="text-xs font-bold uppercase tracking-widest text-white block">SYNCHRONIZÁCIA TELEMETRIE</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider block mt-1">SŤAHUJEM SPRAVODAJSKÉ DEPEŠE...</span>
+                    </div>
+                    <div class="w-36 h-1 bg-white/10 overflow-hidden relative">
+                        <div class="absolute inset-y-0 left-0 bg-[#990000] w-1/3 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pravý stĺpec: RADAR NAJNOVŠÍCH VÝSTRAH -->
+        <div class="lg:col-span-1 space-y-5">
+            <div class="glass-panel p-4 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
+                        <span>🚨 Radar Posledných Zásahov</span>
+                    </h3>
+                    <button onclick="switchView('alerts')" class="text-[11px] text-gray-400 hover:text-white underline">Spravovať</button>
+                </div>
+                <div class="space-y-2.5 overflow-y-auto max-h-[500px] pr-1" id="alarm-hits-container">
+                    <div class="text-xs text-gray-500">Žiadne nové alarmy.</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- VIEW 2: OVLÁDACÍ PANEL ALARMOV A SLEDOVAČOV -->
+    <main id="view-alerts" class="flex-1 p-6 max-w-6xl mx-auto w-full hidden space-y-6">
+        
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span>🚨 Ovládací Panel Alarmov & Sledovačov</span>
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">Sledovanie funguje automaticky vo všetkých svetových jazykoch (SK, EN, RU, ZH, DE, AR...).</p>
+            </div>
+            <button onclick="switchView('feed')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs rounded-lg transition">← Späť do správ</button>
+        </div>
+
+        <!-- Form pre nový alarm -->
+        <div class="glass-panel p-5 rounded-xl border border-white/20/40">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                <span>➕ Pridať Nový Sledovač / Alarm</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Názov alarmu</label>
+                    <input type="text" id="new-alert-name" placeholder="napr. Pád lietadla, Zlato, Fúzia, Nvidia" 
+                           class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-white/20">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Kľúčové slovo (systém ho sám preloží do sveta)</label>
+                    <input type="text" id="new-alert-pattern" placeholder="napr. zlato alebo pád lietadla" 
+                           class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-white/20">
+                </div>
+                <div class="flex items-end gap-2">
+                    <button onclick="createAlert()" class="w-full py-2 bg-white hover:bg-white font-semibold text-white rounded-lg text-xs transition">
+                        💾 Vytvoriť a spustiť radar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zoznam existujúcich alarmov -->
+        <div class="glass-panel p-5 rounded-xl">
+            <h3 class="text-sm font-bold text-white mb-4">📋 Aktívne Sledovače</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-gray-300">
+                    <thead class="text-[11px] uppercase bg-gray-900/80 text-gray-400 border-b border-gray-800">
+                        <tr>
+                            <th class="py-2.5 px-3">Názov</th>
+                            <th class="py-2.5 px-3">Kľúčový Regex / Slová</th>
+                            <th class="py-2.5 px-3">Zásahy (Hits)</th>
+                            <th class="py-2.5 px-3">Stav</th>
+                            <th class="py-2.5 px-3 text-right">Akcia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alerts-table-body" class="divide-y divide-gray-800">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Detailná história zásahov -->
+        <div class="glass-panel p-5 rounded-xl">
+            <h3 class="text-sm font-bold text-white mb-3">🕒 Kompletná História Zásahov Alarmov</h3>
+            <div class="space-y-2 max-h-[400px] overflow-y-auto pr-1" id="full-alert-hits">
+            </div>
+        </div>
+
+    </main>
+
+    
+    <!-- VIEW: KNIŽNICA & OBĽÚBENÉ (VIEW-FAVORITES) -->
+    <main id="view-favorites" class="flex-1 p-6 max-w-6xl mx-auto w-full hidden space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800/80 pb-4">
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span class="text-white">⭐</span>
+                    <span>Knižnica Uložených Článkov</span>
+                    <span id="favorites-total-badge" class="text-xs bg-[#990000] text-white px-2.5 py-0.5 rounded border border-white/20 font-mono font-bold">0 uložených</span>
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">Vaša osobná zbierka dôležitých správ a analýz. Synchronizované so serverom naprieč všetkými zariadeniami.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <input type="text" id="favorites-search" oninput="filterFavoritesList()" placeholder="Hľadať v knižnici..." class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 w-48 sm:w-64 focus:outline-none focus:border-white/20">
+                    <span class="absolute right-2.5 top-2 text-gray-500 text-xs pointer-events-none">🔍</span>
+                </div>
+                <button onclick="exportFavoritesCSV()" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-white border border-white/20/60 text-xs rounded-lg transition flex items-center gap-1.5">
+                    <span>📥 Export CSV</span>
+                </button>
+                <button onclick="switchView('feed')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs rounded-lg transition">← Späť do toku</button>
+            </div>
+        </div>
+
+        <div id="favorites-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Dynamicky naplnené články knižnice -->
+        </div>
+    </main>
+
+    <!-- VIEW 3: SPRÁVA ZDROJOV A NOVINÁRSKYCH PORTÁLOV -->
+    <main id="view-sources" class="flex-1 p-6 max-w-6xl mx-auto w-full hidden space-y-6">
+        
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <span>📡 Správa Zdrojov a Webstránok</span>
+                    <span id="sources-header-country" class="text-xs bg-[#990000] text-white px-2.5 py-0.5 rounded border border-white/20">Všetky krajiny</span>
+                </h2>
+                <p class="text-xs text-gray-400 mt-1">Zoznam monitorovaných médií. Môžeš pridať nový portál s RSS feedom alebo odstrániť nepotrebný zdroj.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="sources-filter-country" onchange="filterSourcesByCountry()" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white">
+                    <option value="">Všetky krajiny</option>
+                </select>
+                <button onclick="switchView('feed')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs rounded-lg transition">← Späť do správ</button>
+            </div>
+        </div>
+
+        <!-- Formulár na pridanie nového zdroja -->
+        <div class="glass-panel p-5 rounded-xl border border-white/20/40">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center justify-between">
+                <span class="flex items-center gap-2">
+                    <span>➕ Pridať Nový Webový Portál alebo Telegram Kanál</span>
+                </span>
+                <span class="text-[11px] text-white bg-[#990000] px-2.5 py-0.5 rounded border border-[#990000]">
+                    💡 Pre Telegram stačí zadať napr. @bbbreaking alebo t.me/disclosetv
+                </span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Krajina</label>
+                    <select id="new-media-country" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white">
+                        <!-- Naplní JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Typ zdroja</label>
+                    <select id="new-media-type" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white">
+                        <option value="general">🌐 Web Noviny / Portál (RSS)</option>
+                        <option value="telegram">✈️ Telegram Kanál</option>
+                        <option value="business">📈 Finančné / Burzové</option>
+                        <option value="tech">🤖 AI & Tech</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Názov kanála / novín</label>
+                    <input type="text" id="new-media-name" placeholder="napr. Disclose.tv, Pravda" 
+                           class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-white/20">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Web URL (voliteľné pri TG)</label>
+                    <input type="url" id="new-media-web" placeholder="https://..." 
+                           class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-white/20">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">RSS URL alebo @TelegramHandle</label>
+                    <input type="text" id="new-media-rss" placeholder="@kanal alebo https://.../rss" 
+                           class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-white/20">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="createMedia()" class="w-full py-2 bg-[#990000] hover:bg-[#990000] font-semibold text-white rounded-lg text-xs transition">
+                        💾 Pridať zdroj
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zoznam zdrojov -->
+        <div class="glass-panel p-5 rounded-xl">
+            <h3 class="text-sm font-bold text-white mb-4 flex justify-between items-center">
+                <span>📋 Zoznam Portálov v Danej Krajine</span>
+                <span class="text-xs text-gray-400" id="sources-count-label">Celkovo 0 zdrojov</span>
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-gray-300">
+                    <thead class="text-[11px] uppercase bg-gray-900/80 text-gray-400 border-b border-gray-800">
+                        <tr>
+                            <th class="py-2.5 px-3">Krajina</th>
+                            <th class="py-2.5 px-3">Médiom / Portál</th>
+                            <th class="py-2.5 px-3">Kategória</th>
+                            <th class="py-2.5 px-3">RSS Feed URL</th>
+                            <th class="py-2.5 px-3">Stiahnutých článkov</th>
+                            <th class="py-2.5 px-3 text-right">Akcia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sources-table-body" class="divide-y divide-gray-800">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- VIEW 4: LIVE GLOBE PULSE 3D (ESQUIRE INTEL SPLIT-SCREEN) -->
+    <main id="view-globe" class="flex-1 p-6 max-w-[1560px] mx-auto w-full hidden flex flex-col space-y-4">
+        
+        <!-- Header & Ovládanie Glóbusu v štýle Esquire Bureau -->
+        <div class="bg-[#000000] p-4 rounded-xl border border-white/10 flex flex-wrap justify-between items-center gap-4 shadow-xl">
+            <div class="flex items-center gap-3">
+                <div class="w-1.5 h-8 bg-[#990000] rounded-full"></div>
+                <div>
+                    <h2 class="text-2xl font-headline tracking-wide uppercase text-white flex items-center gap-2">
+                        <span>LIVE 3D GLOBE PULSE</span>
+                        <span class="text-[10px] font-telemetry bg-[#990000]/20 text-[#ff6b6b] border border-[#990000]/40 px-2 py-0.5 rounded font-bold">COBE RADAR</span>
+                    </h2>
+                    <p class="text-xs text-gray-400 font-editorial italic mt-0.5">Svetový spravodajský monitoring v reálnom čase. Otáčaj 3D planétu a zachytávaj aktívne signály.</p>
+                </div>
+            </div>
+
+            <!-- Filtre Glóbusu: Čas a Kľúčové slovo (Esquire tlačidlá) -->
+            <div class="flex flex-wrap items-center gap-3 text-xs font-telemetry">
+
+
+                <!-- Časový filter -->
+                <div class="flex bg-[#000000] p-1 rounded-lg border border-white/10">
+                    <button onclick="setGlobePeriod('1h')" id="gp-1h" class="px-3 py-1 rounded hover:bg-white/10 text-gray-300 transition">1h</button>
+                    <button onclick="setGlobePeriod('6h')" id="gp-6h" class="px-3 py-1 rounded hover:bg-white/10 text-gray-300 transition">6h</button>
+                    <button onclick="setGlobePeriod('24h')" id="gp-24h" class="px-3 py-1 rounded bg-[#990000] text-white font-bold transition">24h</button>
+                    <button onclick="setGlobePeriod('all')" id="gp-all" class="px-3 py-1 rounded hover:bg-white/10 text-gray-300 transition">VŠETKO</button>
+                </div>
+
+                <!-- Word Search priamo na Glóbuse -->
+                <div class="flex items-center gap-1.5">
+                    <input type="text" id="globe-keyword-input" placeholder="Zadaj slovo (Zlato, Ropa, AI...)" 
+                           class="bg-[#000000] border border-white/15 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#990000] w-52 font-mono">
+                    <button onclick="applyGlobeKeyword()" class="px-3.5 py-1.5 bg-[#990000] hover:bg-[#b30000] font-bold text-white rounded-lg text-xs transition uppercase tracking-wider">
+                        Radarovať
+                    </button>
+                    <button onclick="clearGlobeKeyword()" class="px-2.5 py-1.5 bg-[#000000] hover:bg-white/10 text-gray-300 rounded-lg text-xs transition border border-white/10">
+                        Zmazať
+                    </button>
+                </div>
+
+                <button onclick="switchView('feed')" class="px-3.5 py-1.5 bg-[#000000] hover:bg-white/10 text-gray-200 text-xs rounded-lg transition border border-white/10 uppercase tracking-wider">
+                    ← Zoznam článkov
+                </button>
+            </div>
+        </div>
+
+        <!-- 3D Glóbus Plátno & Bočný Panel Informácií (Rozdelenie podľa Esquire Intel) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-stretch">
+            
+            <!-- Vľavo: 3D Glóbus Canvas Container (7 stĺpcov z 12) -->
+            <div class="lg:col-span-7 bg-[#000000] p-5 rounded-2xl border border-white/10 flex flex-col items-center justify-center relative min-h-[580px] overflow-hidden shadow-2xl">
+                
+                <!-- HUD ukazovatele v rohu canvasu -->
+                <div class="absolute top-4 left-4 z-10 flex flex-col gap-1.5 pointer-events-none font-telemetry">
+                    <div class="text-[10px] text-gray-300 flex items-center gap-2 bg-[#000000]/90 px-3 py-1.5 rounded-lg border border-white/10 shadow-lg">
+                        <span class="w-2 h-2 rounded-full bg-[#990000] animate-ping"></span>
+                        <span class="tracking-widest uppercase font-bold text-white">INTERACTION: DRAG TO ROTATE 3D</span>
+                    </div>
+                    <div id="globe-active-word-badge" class="hidden text-[10px] text-[#ff6b6b] bg-[#990000]/10 px-3 py-1 rounded-lg border border-[#990000]/40">
+                        HĽADANÉ: <span id="globe-active-word-text" class="font-bold text-white"></span>
+                    </div>
+                </div>
+
+                <!-- Live Info Tooltip pri interakcii -->
+                <div class="absolute bottom-4 left-4 z-10 text-[11px] font-telemetry text-gray-400 bg-[#000000]/90 px-3.5 py-2 rounded-xl border border-white/10 pointer-events-none flex items-center gap-4 shadow-lg">
+                    <div>AKTÍVNYCH PULZOV: <span id="globe-markers-count" class="font-bold text-white">0</span></div>
+                    <div class="text-[#990000]">● VEĽKOSŤ = HUSTOTA SPRÁV</div>
+                </div>
+
+                <!-- Samotný Canvas pre Cobe s vrstvou pulzujúcich HTML bodov -->
+                <div class="relative aspect-square select-none flex items-center justify-center" style="width: 530px; height: 530px; max-width: 100%;">
+                    <canvas id="cobe-canvas" style="width: 100%; height: 100%; cursor: grab; opacity: 0; transition: opacity 1.2s ease; border-radius: 50%; touch-action: none;"></canvas>
+                    <div id="cobe-html-overlay" class="absolute inset-0 pointer-events-none rounded-full" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Vpravo: INTELLIGENCE COLUMN (Biely stĺpec presne podľa predlohy) -->
+            <div class="lg:col-span-5 bg-white text-black p-8 rounded-none border border-gray-300 flex flex-col space-y-4 shadow-2xl relative overflow-hidden">
+                
+                <!-- Hlavička Intelligence Column (Biely štýl) -->
+                <div class="border-b border-gray-200 pb-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[11px] font-headline uppercase font-bold tracking-widest text-[#990000] block mb-1">
+                                INTELLIGENCE COLUMN
+                            </span>
+                            <h3 class="text-3xl font-headline tracking-tight uppercase text-black font-bold leading-none" id="globe-selected-country">
+                                <span>GLOBÁLNY SÚHRN</span>
+                            </h3>
+                            <span class="text-xs font-telemetry text-[#990000] font-bold uppercase tracking-wider block mt-1">
+                                RADAROVÉ ZÁSAHY & SLEDOVANÉ ALARMY
+                            </span>
+                        </div>
+                        <div class="flex flex-col items-end gap-1.5">
+                            <span id="globe-selected-count" class="text-xs bg-black text-white px-3 py-1 font-telemetry font-bold shadow-sm shrink-0">
+                                0 SPRÁV
+                            </span>
+                            <button onclick="showAllCountriesGlobeArticles()" id="btn-show-all-countries" class="text-[10px] font-telemetry text-gray-700 hover:text-black bg-gray-100 hover:bg-gray-200 border border-gray-300 px-2 py-0.5 transition uppercase font-bold" title="Zobraziť správy zo všetkých krajín sveta">
+                                VŠETKY KRAJINY
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Panel kľúčových slov: Tlačidlo na otvorenie popup okna a zrušenie výberu -->
+                    <div class="mt-3 pt-3 border-t border-gray-200 flex flex-wrap items-center justify-between gap-2">
+                        <button onclick="openRadarWordsModal()" class="px-3 py-1.5 bg-black hover:bg-[#990000] text-white text-[11px] font-telemetry font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-sm border border-black">
+                            <span>🎯</span>
+                            <span>KĽÚČOVÉ SLOVÁ & ALARMY</span>
+                            <span id="btn-words-count-badge" class="bg-[#990000] text-white px-1.5 py-0.2 text-[9px] font-bold">VŠETKY</span>
+                        </button>
+                        
+                        <div class="flex items-center gap-2">
+                            <button onclick="clearRadarFilter()" id="btn-clear-all-words" class="px-2.5 py-1.5 bg-gray-100 hover:bg-[#990000] text-gray-700 hover:text-white text-[11px] font-telemetry font-bold border border-gray-300 transition uppercase flex items-center gap-1" title="Zrušiť výber a zobraziť všetky správy a slová">
+                                <span>✕</span> ZRUŠIŤ VÝBER (VŠETKO)
+                            </button>
+                        </div>
+                    </div>
+                    <div id="radar-active-preview-chips" class="flex flex-wrap items-center gap-1 mt-2 min-h-[10px]"></div>
+                </div>
+
+
+
+                <!-- Rýchly zoznam najnovších článkov danej krajiny -->
+                <div class="flex-1 overflow-y-auto space-y-3 max-h-[680px] pr-1.5" id="globe-country-articles">
+                    <div class="py-20 px-6 flex flex-col items-center justify-center space-y-4 bg-gray-50 border border-gray-200">
+                        <div class="relative w-12 h-12 flex items-center justify-center">
+                            <div class="absolute inset-0 border-2 border-[#990000] animate-spin border-t-transparent"></div>
+                            <span class="w-3 h-3 bg-[#990000]"></span>
+                        </div>
+                        <div class="text-center font-telemetry">
+                            <span class="text-xs font-bold uppercase tracking-widest text-black block">INICIALIZÁCIA RADARU</span>
+                            <span class="text-[10px] text-gray-500 uppercase tracking-wider block mt-1">PRIPRAVUJEM GLOBÁLNY SÚHRN...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rýchle prepínače top pulzujúcich krajín (Biely dizajn) -->
+                <div class="border-t border-gray-200 pt-3 bg-white">
+                    <div class="text-[11px] font-headline uppercase text-black mb-2 font-bold flex justify-between items-center tracking-wider">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-[#990000] animate-pulse"></span>
+                            <span>NAJSILNEJŠIE RADAROVÉ ZÁSAHY KRAJÍN</span>
+                        </span>
+                        <span class="text-[10px] font-telemetry text-gray-500 font-normal">KLIKNI PRE DETAIL</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1" id="globe-top-countries-pills">
+                        <!-- Naplní JS -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MODAL POPUP OKNO: VÝBER KĽÚČOVÝCH SLOV & ALARMOV PRE 3D GLÓBUS -->
+    <div id="radar-words-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white text-black border-2 border-black w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl relative">
+            <!-- Modal Header -->
+            <div class="p-5 border-b-2 border-black flex justify-between items-center bg-gray-50">
+                <div>
+                    <span class="text-[10px] font-telemetry uppercase tracking-widest text-[#990000] font-bold block">FILTER CENTRÁLA // ESQUIRE INTEL</span>
+                    <h3 class="text-2xl font-headline tracking-wide uppercase text-black font-bold">VÝBER KĽÚČOVÝCH SLOV A ALARMOV</h3>
+                </div>
+                <button onclick="closeRadarWordsModal()" class="w-8 h-8 flex items-center justify-center bg-black hover:bg-[#990000] text-white text-base font-bold transition">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Controls -->
+            <div class="p-4 bg-gray-100 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <button onclick="selectAllRadarWords()" class="px-3 py-1.5 bg-[#990000] hover:bg-[#b30000] text-white text-xs font-telemetry font-bold uppercase transition flex items-center gap-1.5">
+                        <span>⚡</span> ZAPNÚŤ VŠETKY SLOVÁ
+                    </button>
+                    <button onclick="clearRadarFilter()" class="px-3 py-1.5 bg-black hover:bg-gray-800 text-white text-xs font-telemetry font-bold uppercase transition flex items-center gap-1.5">
+                        <span>✕</span> ZRUŠIŤ VÝBER (ZOBRAZIŤ VŠETKO)
+                    </button>
+                </div>
+                <div class="text-[11px] font-telemetry text-gray-600 font-bold" id="modal-words-status-text">
+                    Stav: Zobrazujú sa všetky správy
+                </div>
+            </div>
+
+            <!-- Modal Form pre pridanie vlastného slova -->
+            <div class="p-4 border-b border-gray-200 bg-white">
+                <span class="text-[10px] font-telemetry uppercase text-gray-500 font-bold block mb-1.5">➕ PRIDAŤ VLASTNÉ SLEDOVANÉ SLOVO</span>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="modal-radar-new-word-input" placeholder="Zadaj vlastné slovo (napr. Fúzia, čipy, Boeing)..." 
+                           class="flex-1 bg-gray-50 border border-gray-300 px-3 py-2 text-xs text-black focus:outline-none focus:border-[#990000] font-mono"
+                           onkeydown="if(event.key === 'Enter') addRadarCustomWordFromModal()">
+                    <button onclick="addRadarCustomWordFromModal()" class="px-4 py-2 bg-black hover:bg-[#990000] font-bold text-white text-xs transition uppercase font-telemetry">
+                        PRIDAŤ SLOVO
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body: Zoznam všetkých alarmov a tagov s prepínačmi -->
+            <div class="flex-1 overflow-y-auto p-5 space-y-4 max-h-[420px]">
+                <div>
+                    <span class="text-[11px] font-headline uppercase text-black font-bold tracking-wider block mb-2">
+                        🚨 SYSTÉMOVÉ ALARMY & SLEDOVANÉ TÉMY (KLIKNUTÍM PREPÍNAŠ ON/OFF):
+                    </span>
+                    <div id="modal-preset-alerts-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <!-- Naplní JS -->
+                    </div>
+                </div>
+
+                <div id="modal-custom-words-section" class="border-t border-gray-200 pt-3">
+                    <span class="text-[11px] font-headline uppercase text-black font-bold tracking-wider block mb-2">
+                        🎯 TVOJE VLASTNÉ PRIDANÉ SLOVÁ:
+                    </span>
+                    <div id="modal-custom-words-grid" class="flex flex-wrap gap-2">
+                        <!-- Naplní JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 bg-gray-50 border-t-2 border-black flex justify-between items-center">
+                <span class="text-[10px] font-telemetry text-gray-500">
+                    Tip: Keď je výber zrušený, systém automaticky zobrazuje správy zo všetkých tém.
+                </span>
+                <button onclick="closeRadarWordsModal()" class="px-5 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase transition">
+                    HOTOVO / ZAVRIEŤ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL OKNO: PLNÝ PREPIS ČLÁNKU SO ZVÝRAZNENÍM RADAROV A PREKLADMI -->
+    <div id="article-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="glass-panel bg-gray-950 border border-gray-700 w-full max-w-4xl max-h-[90vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+            
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-gray-800 flex justify-between items-start">
+                <div class="pr-6 flex-1">
+                    <div class="flex items-center gap-2 text-xs text-white mb-1">
+                        <span id="modal-media-country" class="font-bold"></span>
+                        <span>•</span>
+                        <span id="modal-date" class="text-gray-500"></span>
+                    </div>
+                    <h3 id="modal-title-orig" class="text-lg font-bold text-white mb-2 leading-snug"></h3>
+                    <div id="modal-radar-hits" class="flex flex-wrap items-center gap-1.5 mb-2"></div>
+                    
+                    <!-- Preklady Titulku -->
+                    <div class="space-y-1 text-xs">
+                        <div class="flex items-start gap-2 text-black bg-white p-2.5 border-l-4 border-black border-t border-b border-r border-gray-300 shadow-sm">
+                            <span class="font-bold text-[10px] uppercase bg-[#990000] px-1.5 py-0.5 text-white mt-0.5 font-telemetry">SK TITULOK</span>
+                            <span id="modal-title-sk" class="font-editorial text-sm font-bold text-black"></span>
+                        </div>
+                        <div class="flex items-start gap-2 text-white bg-[#990000] p-2.5 border border-[#990000] shadow-sm">
+                            <span class="font-bold text-[10px] uppercase bg-black px-1.5 py-0.5 text-white mt-0.5 font-telemetry">EN TITULOK</span>
+                            <span id="modal-title-en" class="font-editorial text-sm text-white"></span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white p-2 rounded-lg bg-gray-900 border border-gray-700 text-lg leading-none">&times;</button>
+            </div>
+
+            <!-- Prepínač Jazyka Pre Plný Text Článku -->
+            <div class="flex border-b border-gray-800 bg-gray-900/60 px-6 pt-2 text-xs">
+                <button onclick="switchModalLang('sk')" id="modal-lang-sk" class="modal-lang-tab px-4 py-2 rounded-t transition active">
+                    🇸🇰 Slovenský Prepis (Plný Text)
+                </button>
+                <button onclick="switchModalLang('en')" id="modal-lang-en" class="modal-lang-tab px-4 py-2 rounded-t transition text-gray-400 hover:text-white">
+                    🇬🇧 English Full Text
+                </button>
+                <button onclick="switchModalLang('orig')" id="modal-lang-orig" class="modal-lang-tab px-4 py-2 rounded-t transition text-gray-400 hover:text-white">
+                    🌐 Originálny Text
+                </button>
+            </div>
+
+            <!-- Modal Body (Plný Prepis & Zvýraznenia) -->
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 text-sm text-gray-300 leading-relaxed" id="modal-body">
+                <div class="flex items-center justify-center py-16 text-gray-500 gap-2">
+                    <span class="w-4 h-4 rounded-full border-2 border-white/20 border-t-transparent animate-spin"></span>
+                    <span>Sťahujem plný prepis článku a prekladám...</span>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-800 bg-gray-900/80 flex flex-wrap justify-between items-center gap-3">
+                <div class="text-xs text-gray-400 flex items-center gap-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded bg-red-500/80"></span>
+                    <span>Zvýraznené slová zodpovedajú aktívnym radarom a hľadaným témam</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="modal-report-btn" onclick="reportTranslationIssue()" class="px-3.5 py-2 bg-black hover:bg-[#990000] text-gray-300 hover:text-white text-xs font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20 hover:border-[#990000]" title="Nahlásiť nepreložený článok alebo chybu v preklade pre vylepšenie AI prekladača">
+                        <span id="modal-report-icon">⚠️</span>
+                        <span id="modal-report-text">NAHLÁSIŤ CHYBU PREKLADU</span>
+                    </button>
+                    <button id="modal-fav-btn" onclick="toggleModalFavorite()" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border">
+                        <span id="modal-fav-icon">⭐</span>
+                        <span id="modal-fav-text">Uložiť do knižnice</span>
+                    </button>
+                    <button onclick="closeModal()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs transition">Zavrieť</button>
+                    <a id="modal-orig-link" href="#" target="_blank" class="px-5 py-2 bg-[#990000] hover:bg-[#990000] font-bold text-white rounded-lg text-xs flex items-center gap-1.5 transition">
+                        <span>Prejsť na originálnu stránku ↗</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JS Logic -->
+    <script>
+        function formatTelemetryDate(dateVal) {
+            if (!dateVal) return '';
+            const d = new Date(dateVal);
+            if (isNaN(d.getTime())) return '';
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            return `${day}.${month}. ${hours}:${mins}`;
+        }
+
+        function formatTelemetryDateFull(dateVal) {
+            if (!dateVal) return '';
+            const d = new Date(dateVal);
+            if (isNaN(d.getTime())) return '';
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            const secs = String(d.getSeconds()).padStart(2, '0');
+            return `${day}.${month}.${year} ${hours}:${mins}:${secs}`;
+        }
+
+        let currentCountry = '';
+        let currentPeriod = '24h';
+        let currentQuery = '';
+        let currentArticlesOffset = 0;
+        let currentGlobeArticlesOffset = 0;
+        const ARTICLES_BATCH_SIZE = 50;
+        let currentArticleData = null;
+        let currentModalLang = 'sk';
+        let globeInstance = null;
+        let globeMarkers = [];
+        let globePhi = 0;
+        let globeTheta = 0.3;
+        let globePeriod = '24h';
+        let globeQuery = '';
+        let pointerInteracting = null;
+        let pointerInteractionMovement = 0;
+
+        function switchView(view) {
+            const feedView = document.getElementById('view-feed');
+            const alertsView = document.getElementById('view-alerts');
+            const sourcesView = document.getElementById('view-sources');
+            const globeView = document.getElementById('view-globe');
+            const favView = document.getElementById('view-favorites');
+            const tabFeed = document.getElementById('tab-feed');
+            const tabAlerts = document.getElementById('tab-alerts');
+            const tabSources = document.getElementById('tab-sources');
+            const tabGlobe = document.getElementById('tab-globe');
+            const tabFav = document.getElementById('tab-favorites');
+
+            // Skryť všetky
+            feedView.classList.add('hidden');
+            alertsView.classList.add('hidden');
+            sourcesView.classList.add('hidden');
+            globeView.classList.add('hidden');
+            if (favView) favView.classList.add('hidden');
+            // Odstranenie vsetkych aktivnych a cervenych tried zo vsetkych tlacidiel navigacie
+            [tabFeed, tabAlerts, tabSources, tabGlobe, tabFav].forEach(t => {
+                if (t) {
+                    t.classList.remove('active-tab', 'bg-[#990000]', 'text-white', 'text-[#990000]', 'border-b-2', 'border-[#990000]');
+                    t.classList.add('text-black');
+                }
+            });
+
+            // Nastavenie cerveneho stavu VÝLUČNE pre aktualne otvorenu podstranku
+            const activeTabMap = { feed: tabFeed, alerts: tabAlerts, sources: tabSources, globe: tabGlobe, favorites: tabFav };
+            const currentTab = activeTabMap[view];
+            if (currentTab) {
+                currentTab.classList.remove('text-black');
+                currentTab.classList.add('active-tab');
+            }
+
+            if (view === 'feed') {
+                feedView.classList.remove('hidden');
+            } else if (view === 'alerts') {
+                alertsView.classList.remove('hidden');
+                loadManageAlerts();
+            } else if (view === 'sources') {
+                sourcesView.classList.remove('hidden');
+                loadManageSources();
+            } else if (view === 'globe') {
+                globeView.classList.remove('hidden');
+                fetch('/api/alerts').then(r => r.json()).then(al => { cachedSystemAlerts = al; renderRadarActiveWords(); }).catch(() => {});
+                initOrUpdateGlobe();
+            } else if (view === 'favorites') {
+                if (favView) favView.classList.remove('hidden');
+                loadFavorites();
+            }
+        }
+
+        function setPeriod(p) {
+            currentPeriod = p;
+            document.querySelectorAll('.time-pill').forEach(el => el.classList.remove('active'));
+            const activeEl = document.getElementById(`p-${p}`);
+            if (activeEl) activeEl.classList.add('active');
+            updateBadge();
+            loadCountries();
+            loadStats();
+            loadArticles(currentCountry, currentQuery);
+            if (currentQuery) analyzeKeyword();
+        }
+
+        function updateBadge() {
+            const countryText = currentCountry ? currentCountry : 'Všetky krajiny';
+            const periodMap = {'1h':'1 hodina', '6h':'6 hodín', '24h':'24 hodín', '7d':'7 dní', '30d':'30 dní', 'all':'Celá história'};
+            document.getElementById('current-filter-badge').innerText = `${countryText} · ${periodMap[currentPeriod] || currentPeriod}`;
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`/api/stats?period=${currentPeriod}`);
+                const d = await res.json();
+                document.getElementById('stat-articles').innerText = d.total_articles;
+                document.getElementById('stat-media').innerText = d.total_media;
+                document.getElementById('stat-alerts').innerText = d.total_alerts;
+                document.getElementById('badge-alerts-count').innerText = d.total_alarm_hits;
+                if (document.getElementById('badge-favorites-count')) {
+                    document.getElementById('badge-favorites-count').innerText = d.total_favorites !== undefined ? d.total_favorites : 0;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadCountries() {
+            try {
+                let url = `/api/countries?period=${currentPeriod}`;
+                if (currentQuery) url += `&query=${encodeURIComponent(currentQuery)}`;
+                const res = await fetch(url);
+                const list = await res.json();
+                const container = document.getElementById('country-list');
+                let totalAll = list.reduce((acc, c) => acc + (c.article_count || 0), 0);
+                let html = `
+                    <button onclick="filterCountry('')" class="w-full text-left px-3 py-1.5 rounded-lg ${currentCountry === '' ? 'bg-[#990000] font-bold' : 'bg-gray-800/80 hover:bg-gray-700'} text-xs flex justify-between items-center transition">
+                        <span>Všetky krajiny</span>
+                        <span class="text-[10px] text-gray-300 bg-gray-900/90 px-1.5 py-0.5 rounded font-mono">${totalAll}</span>
+                    </button>
+                `;
+                list.forEach(c => {
+                    const active = currentCountry === c.iso_code;
+                    html += `
+                        <div class="flex items-center justify-between px-3 py-1.5 rounded-lg ${active ? 'bg-[#990000] font-bold' : 'bg-gray-800/60 hover:bg-gray-700/80'} text-xs transition group">
+                            <button onclick="filterCountry('${c.iso_code}', '${c.name_sk}')" class="flex-1 text-left truncate flex items-center justify-between pr-2">
+                                <span class="truncate">${c.name_sk} (${c.iso_code})</span>
+                                <span class="text-[10px] ${c.article_count > 0 ? 'text-white font-bold bg-[#990000] border border-white/20/80' : 'text-gray-500 bg-gray-900'} px-1.5 py-0.5 rounded font-mono">${c.article_count}</span>
+                            </button>
+                            <button onclick="openCountrySources('${c.iso_code}')" title="Zobraziť a spravovať webstránky pre ${c.name_sk}" class="ml-1 text-[10px] text-white hover:text-white bg-[#990000] hover:bg-[#990000] border border-white/20/70 px-1.5 py-0.5 rounded flex items-center gap-1 transition">
+                                <span>📡</span>
+                                <span class="font-bold">${c.media_count || 0}</span>
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } catch (e) { console.error(e); }
+        }
+
+        function renderFeedArticleItem(a) {
+            const dateObj = new Date(a.published_at || a.scraped_at);
+            const timeStr = dateObj.toLocaleDateString([], {day:'2-digit', month:'2-digit'}) + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            return `
+                <div onclick="openArticleModal(${a.id})" class="glass-panel p-4 rounded-xl hover:border-white/20/60 hover:bg-gray-900/90 transition cursor-pointer">
+                    <div class="flex items-center justify-between text-xs text-gray-400 mb-1.5">
+                        <span class="font-medium text-white flex items-center gap-1.5">
+                            ${(a.url && a.url.includes('t.me')) || (a.media_name && a.media_name.includes('TG')) ? '<span class="px-1 py-0.2 bg-[#990000] text-white border border-[#990000] rounded text-[9px] font-bold">✈️ TG</span>' : ''}
+                            <span>${a.media_name} · ${a.country_name}</span>
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <button onclick="event.stopPropagation(); toggleCardFavorite(${a.id}, this)" class="p-1 rounded hover:bg-gray-800 transition ${a.is_favorite ? 'text-white' : 'text-gray-500 hover:text-white'}" title="${a.is_favorite ? 'Odstrániť z knižnice' : 'Uložiť do knižnice'}">
+                                ${a.is_favorite ? '★' : '☆'}
+                            </button>
+                            <div class="text-[11px] font-telemetry text-gray-400 flex items-center gap-2">
+                                ${a.published_at ? `<span title="Čas uverejnenia médiom">🕒 ${formatTelemetryDate(a.published_at)}</span>` : ''}
+                                ${a.scraped_at ? `<span class="text-gray-500" title="Čas zachytenia naším systémom">📡 ${formatTelemetryDate(a.scraped_at)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Originálny Titulok -->
+                    <div class="text-sm font-semibold text-white mb-2 leading-snug">
+                        ${a.title_orig}
+                    </div>
+
+                    <!-- Radarové Záchyty & Hľadané Slová -->
+                    ${(() => {
+                        let tagsHtml = '';
+                        if (a.matched_alerts && a.matched_alerts.length > 0) {
+                            a.matched_alerts.forEach(al => {
+                                tagsHtml += `
+                                    <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-red-950/80 border border-red-800 text-[11px] text-red-200 mr-1.5 mb-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
+                                        <span class="font-bold text-red-300">${al.alert_name}:</span>
+                                        <span class="font-mono bg-red-900/90 text-white px-1.5 py-0.2 rounded font-semibold">${al.matched_word}</span>
+                                    </div>
+                                `;
+                            });
+                        }
+                        if (a.searched_word) {
+                            tagsHtml += `
+                                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#990000] border border-white/20 text-[11px] text-white mr-1.5 mb-1.5">
+                                    <span>🔍</span>
+                                    <span class="font-bold text-white">Hľadané:</span>
+                                    <span class="font-mono bg-[#990000] text-white px-1.5 py-0.2 rounded font-semibold">${a.searched_word}</span>
+                                </div>
+                            `;
+                        }
+                        return tagsHtml ? `<div class="flex flex-wrap items-center mb-2">${tagsHtml}</div>` : '';
+                    })()}
+
+                    <!-- Slovenský a Anglický preklad titulku (SK na bielom, EN na červenom) -->
+                    ${a.title_sk && a.title_sk !== a.title_orig ? `
+                        <div class="text-xs text-black bg-white p-2.5 mb-2 flex items-start gap-2 border-l-4 border-black border-t border-b border-r border-gray-300 shadow-sm">
+                            <span class="text-[9px] uppercase font-bold bg-[#990000] px-1.5 py-0.5 text-white shrink-0 mt-0.5 font-telemetry tracking-wider">SK</span>
+                            <span class="leading-relaxed font-editorial font-bold text-black text-[13px]">${a.title_sk}</span>
+                        </div>
+                    ` : ''}
+
+                    ${a.title_en && a.title_en !== a.title_orig ? `
+                        <div class="text-xs text-white bg-[#990000] p-2.5 mb-2 flex items-start gap-2 border border-[#990000] shadow-sm">
+                            <span class="text-[9px] uppercase font-bold bg-black px-1.5 py-0.5 text-white shrink-0 mt-0.5 font-telemetry tracking-wider">EN</span>
+                            <span class="leading-relaxed font-editorial text-white text-[13px]">${a.title_en}</span>
+                        </div>
+                    ` : ''}
+
+                    ${a.perex_orig ? `<p class="text-xs text-gray-400 line-clamp-2">${a.perex_orig}</p>` : ''}
+                    
+                    <div class="mt-2.5 flex items-center justify-between text-[11px] text-gray-500 border-t border-gray-800/80 pt-2">
+                        <span class="text-white font-medium">📄 Klikni pre plný slovenský prepis</span>
+                        <span>Čítať →</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadArticles(country = '', query = '') {
+            currentArticlesOffset = 0;
+            const container = document.getElementById('articles-container');
+            container.innerHTML = `
+                <div class="py-20 px-6 flex flex-col items-center justify-center space-y-4 bg-[#11141a] border border-white/10">
+                    <div class="relative w-12 h-12 flex items-center justify-center">
+                        <div class="absolute inset-0 border-2 border-white/20 animate-ping opacity-25"></div>
+                        <div class="absolute inset-0 border-2 border-[#990000] animate-spin border-t-transparent"></div>
+                        <span class="w-3 h-3 bg-[#990000]"></span>
+                    </div>
+                    <div class="text-center font-telemetry">
+                        <span class="text-xs font-bold uppercase tracking-widest text-white block">SYNCHRONIZÁCIA TELEMETRIE</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-wider block mt-1">SŤAHUJEM SPRAVODAJSKÉ DEPEŠE...</span>
+                    </div>
+                    <div class="w-36 h-1 bg-white/10 overflow-hidden relative">
+                        <div class="absolute inset-y-0 left-0 bg-[#990000] w-1/3 animate-pulse"></div>
+                    </div>
+                </div>
+            `;
+            try {
+                let url = `/api/articles?limit=${ARTICLES_BATCH_SIZE}&offset=0&period=${currentPeriod}`;
+                if (country) url += `&country=${country}`;
+                if (query) url += `&query=${encodeURIComponent(query)}`;
+                const res = await fetch(url);
+                const articles = await res.json();
+
+                if (articles.length === 0) {
+                    container.innerHTML = '<div class="text-center py-12 text-gray-500 text-xs">Žiadne články pre zvolený filter a obdobie.</div>';
+                    return;
+                }
+
+                currentArticlesOffset = articles.length;
+
+                let html = '<div id="feed-articles-list" class="space-y-3">';
+                articles.forEach(a => {
+                    html += renderFeedArticleItem(a);
+                });
+                html += '</div>';
+
+                // Tlačidlo načítať ďalšie na spodku zoznamu
+                if (articles.length === ARTICLES_BATCH_SIZE) {
+                    html += `
+                        <div id="feed-load-more-container" class="pt-4 pb-2 text-center">
+                            <button onclick="loadMoreArticles()" id="btn-load-more-feed" class="w-full py-3 bg-[#11141a] hover:bg-[#990000] border border-white/15 hover:border-[#990000] text-white text-xs font-telemetry font-bold uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2">
+                                <span>➕</span> NAČÍTAŤ ĎALŠIE SPRÁVY (+50)
+                            </button>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div class="text-center py-12 text-red-500 text-xs">Chyba načítania článkov.</div>';
+            }
+        }
+
+        async function loadMoreArticles() {
+            const btn = document.getElementById('btn-load-more-feed');
+            const listContainer = document.getElementById('feed-articles-list');
+            const loadMoreWrapper = document.getElementById('feed-load-more-container');
+            if (!listContainer || !btn) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-white border-t-transparent animate-spin mr-2"></span> SŤAHUJEM ĎALŠIE SPRÁVY...';
+
+            try {
+                let url = `/api/articles?limit=${ARTICLES_BATCH_SIZE}&offset=${currentArticlesOffset}&period=${currentPeriod}`;
+                if (currentCountry) url += `&country=${currentCountry}`;
+                if (currentQuery) url += `&query=${encodeURIComponent(currentQuery)}`;
+
+                const res = await fetch(url);
+                const moreArticles = await res.json();
+
+                if (moreArticles.length === 0) {
+                    if (loadMoreWrapper) {
+                        loadMoreWrapper.innerHTML = '<div class="text-center py-4 text-gray-500 text-xs font-telemetry uppercase tracking-wider">● Všetky správy za toto obdobie boli načítané</div>';
+                    }
+                    return;
+                }
+
+                currentArticlesOffset += moreArticles.length;
+
+                let appendHtml = '';
+                moreArticles.forEach(a => {
+                    appendHtml += renderFeedArticleItem(a);
+                });
+                listContainer.insertAdjacentHTML('beforeend', appendHtml);
+
+                if (moreArticles.length < ARTICLES_BATCH_SIZE) {
+                    if (loadMoreWrapper) {
+                        loadMoreWrapper.innerHTML = '<div class="text-center py-4 text-gray-500 text-xs font-telemetry uppercase tracking-wider">● Všetky správy za toto obdobie boli načítané</div>';
+                    }
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>➕</span> NAČÍTAŤ ĎALŠIE SPRÁVY (+50)';
+                }
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerHTML = 'Chyba načítania. Skúsiť znova ↻';
+            }
+        }
+
+        async function openArticleModal(articleId) {
+            const modal = document.getElementById('article-modal');
+            const body = document.getElementById('modal-body');
+            
+            // Okamžité vyčistenie všetkých políčok z predchádzajúceho článku (žiadny starý text)
+            document.getElementById('modal-media-country').innerText = 'Načítavam médium...';
+            document.getElementById('modal-date').innerText = 'Zisťujem telemetrický čas...';
+            document.getElementById('modal-title-orig').innerText = 'Načítavam originálny titulok...';
+            document.getElementById('modal-title-sk').innerText = 'Pripravujem slovenský preklad...';
+            document.getElementById('modal-title-en').innerText = 'Pripravujem anglický preklad...';
+            document.getElementById('modal-radar-hits').innerHTML = '';
+            const repBtn = document.getElementById('modal-report-btn');
+            const repTxt = document.getElementById('modal-report-text');
+            const repIco = document.getElementById('modal-report-icon');
+            if (repBtn) {
+                repBtn.disabled = false;
+                repBtn.className = 'px-3.5 py-2 bg-black hover:bg-[#990000] text-gray-300 hover:text-white text-xs font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20 hover:border-[#990000]';
+                if (repTxt) repTxt.innerText = 'NAHLÁSIŤ CHYBU PREKLADU';
+                if (repIco) repIco.innerText = '⚠️';
+            }
+            document.getElementById('modal-orig-link').href = '#';
+
+            modal.classList.remove('hidden');
+            body.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
+                    <span class="w-6 h-6 rounded-full border-2 border-[#990000] border-t-transparent animate-spin"></span>
+                    <span class="text-xs font-telemetry">Sťahujem plný text článku a generujem kompletný slovenský a anglický prepis...</span>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`/api/articles/${articleId}`);
+                currentArticleData = await res.json();
+
+                document.getElementById('modal-media-country').innerText = `${currentArticleData.media_name} (${currentArticleData.country_name})`;
+                const pubStr = currentArticleData.published_at ? `🕒 Vydané: ${formatTelemetryDateFull(currentArticleData.published_at)}` : '';
+                const scrStr = currentArticleData.scraped_at ? `📡 Zachytené: ${formatTelemetryDateFull(currentArticleData.scraped_at)}` : '';
+                document.getElementById('modal-date').innerText = [pubStr, scrStr].filter(Boolean).join('  |  ');
+                document.getElementById('modal-title-orig').innerText = currentArticleData.title_orig;
+                document.getElementById('modal-title-sk').innerText = currentArticleData.title_sk || currentArticleData.title_orig;
+                document.getElementById('modal-title-en').innerText = currentArticleData.title_en || currentArticleData.title_orig;
+                document.getElementById('modal-orig-link').href = currentArticleData.url;
+
+                // Zobrazenie dôvodu záchytu (Radar badge priamo v hlavičke modalu)
+                const hitsDiv = document.getElementById('modal-radar-hits');
+                let hitsHtml = '';
+                if (currentArticleData.matched_alerts && currentArticleData.matched_alerts.length > 0) {
+                    currentArticleData.matched_alerts.forEach(al => {
+                        hitsHtml += `
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-950/90 border border-red-700 text-xs text-red-200 shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                                <span class="font-bold text-red-300">Radarový záchyt (${al.alert_name}):</span>
+                                <span class="font-mono bg-red-900 text-white px-2 py-0.5 rounded font-bold">${al.matched_word}</span>
+                            </div>
+                        `;
+                    });
+                }
+                if (currentQuery) {
+                    hitsHtml += `
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#990000] border border-white/20 text-xs text-white shadow-sm">
+                            <span>🔍</span>
+                            <span class="font-bold text-white">Hľadané slovo:</span>
+                            <span class="font-mono bg-[#990000] text-white px-2 py-0.5 rounded font-bold">${currentQuery}</span>
+                        </div>
+                    `;
+                }
+                hitsDiv.innerHTML = hitsHtml;
+
+                // Predvolený jazyk zobrazenia: SK
+                currentModalLang = 'sk';
+                document.getElementById('modal-title-orig').innerText = currentArticleData.title_sk || currentArticleData.title_orig;
+                updateModalFavButton(currentArticleData.is_favorite);
+                renderModalText();
+
+            } catch (e) {
+                console.error(e);
+                body.innerHTML = '<div class="text-center py-12 text-red-400 text-sm">Nepodarilo sa načítať prepis článku.</div>';
+            }
+        }
+
+        function switchModalLang(lang) {
+            currentModalLang = lang;
+            document.querySelectorAll('.modal-lang-tab').forEach(el => {
+                el.classList.remove('active', 'text-white');
+                el.classList.add('text-gray-400');
+            });
+            const activeEl = document.getElementById(`modal-lang-${lang}`);
+            if (activeEl) {
+                activeEl.classList.add('active');
+                activeEl.classList.remove('text-gray-400');
+            }
+
+            // Aktualizuj titulok podla zvoleneho jazyka v modale
+            if (currentArticleData) {
+                const titleEl = document.getElementById('modal-title-orig');
+                if (lang === 'sk') {
+                    titleEl.innerText = currentArticleData.title_sk || currentArticleData.title_orig;
+                } else if (lang === 'en') {
+                    titleEl.innerText = currentArticleData.title_en || currentArticleData.title_orig;
+                } else {
+                    titleEl.innerText = currentArticleData.title_orig;
+                }
+            }
+
+            renderModalText();
+        }
+
+        function renderModalText() {
+            if (!currentArticleData) return;
+            const body = document.getElementById('modal-body');
+
+            let rawText = '';
+            if (currentModalLang === 'sk') {
+                rawText = currentArticleData.full_text_sk || currentArticleData.full_text_orig || '';
+            } else if (currentModalLang === 'en') {
+                rawText = currentArticleData.full_text_en || currentArticleData.full_text_orig || '';
+            } else {
+                rawText = currentArticleData.full_text_orig || currentArticleData.perex_orig || '';
+            }
+
+            // Escape HTML
+            rawText = rawText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            // Zhromaždiť radar slová pre zvýraznenie
+            const patterns = [];
+            if (currentArticleData.active_radar_patterns) {
+                currentArticleData.active_radar_patterns.forEach(p => {
+                    p.query_pattern.split('|').forEach(word => {
+                        const w = word.trim();
+                        if (w.length > 2) patterns.push(w);
+                    });
+                });
+            }
+            if (currentQuery && currentQuery.length > 2) {
+                patterns.push(currentQuery);
+            }
+
+            const paragraphs = rawText.split(/\n+/);
+            const processedParagraphs = paragraphs.map(p => {
+                let content = p;
+                patterns.forEach(pat => {
+                    const regex = new RegExp(`(${pat})`, 'gi');
+                    content = content.replace(regex, `<span class="radar-highlight">$1</span>`);
+                });
+                return `<p class="mb-3.5 text-gray-200 leading-relaxed text-[13.5px]">${content}</p>`;
+            });
+
+            body.innerHTML = `
+                <div class="prose max-w-none">
+                    <div class="mb-4 p-3 bg-gray-900/80 rounded-xl border border-gray-800 text-xs text-gray-400 flex justify-between items-center">
+                        <span><strong>Dĺžka textu:</strong> ${rawText.length} znakov (${paragraphs.length} odsekov)</span>
+                        <span class="text-white font-mono">${currentModalLang.toUpperCase()} REŽIM</span>
+                    </div>
+                    <div>
+                        ${processedParagraphs.join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function reportTranslationIssue() {
+            if (!currentArticleData || !currentArticleData.id) return;
+            const aid = currentArticleData.id;
+            const repBtn = document.getElementById('modal-report-btn');
+            const repTxt = document.getElementById('modal-report-text');
+            const repIco = document.getElementById('modal-report-icon');
+
+            if (repBtn) {
+                repBtn.disabled = true;
+                if (repTxt) repTxt.innerText = 'ODOSIELAM...';
+            }
+
+            try {
+                const res = await fetch('/api/translation-issues', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        article_id: aid,
+                        reason: 'nepreložené / zlá kvalita'
+                    })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    if (repBtn) {
+                        repBtn.className = 'px-3.5 py-2 bg-emerald-950 border border-emerald-600 text-emerald-300 text-xs font-telemetry font-bold flex items-center gap-1.5';
+                        if (repTxt) repTxt.innerText = 'NAHLÁSENÉ DO LOGU CHÝB ✓';
+                        if (repIco) repIco.innerText = '✓';
+                    }
+                }
+            } catch (err) {
+                console.error('Error reporting translation issue:', err);
+                if (repBtn) {
+                    repBtn.disabled = false;
+                    if (repTxt) repTxt.innerText = 'CHYBA ODOSLANIA (SKÚSIŤ ZNOVA)';
+                }
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('article-modal').classList.add('hidden');
+            currentArticleData = null;
+            document.getElementById('modal-media-country').innerText = '';
+            document.getElementById('modal-date').innerText = '';
+            document.getElementById('modal-title-orig').innerText = '';
+            document.getElementById('modal-title-sk').innerText = '';
+            document.getElementById('modal-title-en').innerText = '';
+            document.getElementById('modal-radar-hits').innerHTML = '';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        async function loadAlertsOverview() {
+            try {
+                const hitsRes = await fetch('/api/alert-hits?limit=25');
+                const hits = await hitsRes.json();
+                const hitsContainer = document.getElementById('alarm-hits-container');
+                if (hits.length === 0) {
+                    hitsContainer.innerHTML = '<div class="text-xs text-gray-500">Žiadne zaznamenané alarmy.</div>';
+                } else {
+                    let hitsHtml = '';
+                    hits.forEach(h => {
+                        hitsHtml += `
+                            <div onclick="openArticleModal(${h.article_id})" class="p-2.5 rounded-lg bg-red-950/40 border border-red-900/60 text-xs hover:border-red-500 cursor-pointer transition">
+                                <div class="font-semibold text-red-400 flex justify-between">
+                                    <span>${h.alert_name}</span>
+                                    <span class="text-gray-400">${h.country_name}</span>
+                                </div>
+                                <div class="text-gray-200 mt-1 block font-medium">
+                                    ${h.title_orig}
+                                </div>
+                                <div class="text-[10px] text-gray-500 mt-1 flex justify-between">
+                                    <span>${h.media_name}</span>
+                                    <span class="text-white">Otvoriť prepis →</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    hitsContainer.innerHTML = hitsHtml;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadManageAlerts() {
+            try {
+                const [alertsRes, hitsRes] = await Promise.all([
+                    fetch('/api/alerts'),
+                    fetch('/api/alert-hits?limit=50')
+                ]);
+                const alerts = await alertsRes.json();
+                const hits = await hitsRes.json();
+
+                const tbody = document.getElementById('alerts-table-body');
+                let rowsHtml = '';
+                alerts.forEach(al => {
+                    rowsHtml += `
+                        <tr class="hover:bg-gray-900/50">
+                            <td class="py-2.5 px-3 font-semibold text-white">${al.name}</td>
+                            <td class="py-2.5 px-3 font-mono text-[11px] text-white max-w-xs truncate" title="${al.query_pattern}">${al.query_pattern}</td>
+                            <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-red-950 text-red-300 font-bold border border-red-800">${al.hit_count}</span></td>
+                            <td class="py-2.5 px-3"><span class="text-white font-semibold">Aktívny</span></td>
+                            <td class="py-2.5 px-3 text-right">
+                                <button onclick="deleteAlert(${al.id})" class="px-2 py-1 bg-red-900/60 hover:bg-red-800 text-red-200 rounded text-[11px] transition">Zmazať</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = rowsHtml || '<tr><td colspan="5" class="p-4 text-center text-gray-500">Žiadne alarmy.</td></tr>';
+
+                // Hits
+                const hitsDiv = document.getElementById('full-alert-hits');
+                let hHtml = '';
+                hits.forEach(h => {
+                    const time = new Date(h.triggered_at).toLocaleString();
+                    hHtml += `
+                        <div onclick="openArticleModal(${h.article_id})" class="flex justify-between items-center p-2 rounded bg-gray-900/80 border border-gray-800 text-xs hover:border-white/20 cursor-pointer transition">
+                            <div>
+                                <span class="px-2 py-0.5 bg-red-900/80 text-red-200 rounded text-[10px] mr-2 font-bold">${h.alert_name}</span>
+                                <span class="text-white font-medium">${h.title_orig}</span>
+                                <span class="text-gray-500 text-[11px] ml-2">(${h.country_name} · ${h.media_name})</span>
+                            </div>
+                            <span class="text-gray-500 text-[10px] whitespace-nowrap">${time}</span>
+                        </div>
+                    `;
+                });
+                hitsDiv.innerHTML = hHtml || '<div class="text-xs text-gray-500">Žiadne zásahy.</div>';
+            } catch (e) { console.error(e); }
+        }
+
+        async function createAlert() {
+            const name = document.getElementById('new-alert-name').value.trim();
+            const pattern = document.getElementById('new-alert-pattern').value.trim();
+            if (!name || !pattern) {
+                alert('Zadaj názov aj kľúčové slovo.');
+                return;
+            }
+            try {
+                const res = await fetch('/api/alerts', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ name: name, query_pattern: pattern, notify_telegram: true })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    document.getElementById('new-alert-name').value = '';
+                    document.getElementById('new-alert-pattern').value = '';
+                    alert(`Alarm vytvorený a multilingválne rozbalený! Spätne zachytených článkov: ${d.retro_hits}`);
+                    cachedSystemAlerts = []; // Vynútiť znovunačítanie v radare glóbusu
+                    fetch('/api/alerts').then(r => r.json()).then(al => { cachedSystemAlerts = al; renderRadarActiveWords(); }).catch(() => {});
+                    loadManageAlerts();
+                    loadStats();
+                }
+            } catch (e) { alert('Chyba pri ukladaní alarmu.'); }
+        }
+
+        async function deleteAlert(id) {
+            if (!confirm('Naozaj zmazať tento alarm?')) return;
+            try {
+                await fetch(`/api/alerts/${id}`, { method: 'DELETE' });
+                cachedSystemAlerts = [];
+                fetch('/api/alerts').then(r => r.json()).then(al => { cachedSystemAlerts = al; renderRadarActiveWords(); }).catch(() => {});
+                loadManageAlerts();
+                loadStats();
+            } catch (e) { alert('Chyba pri mazaní.'); }
+        }
+
+        // ================= SPRÁVA ZDROJOV / MÉDIÍ =================
+
+        let currentSourcesCountry = '';
+
+        function openCountrySources(iso) {
+            currentSourcesCountry = iso;
+            switchView('sources');
+            document.getElementById('sources-filter-country').value = iso;
+            filterSourcesByCountry();
+        }
+
+        async function loadManageSources() {
+            try {
+                const [cRes, mRes] = await Promise.all([
+                    fetch('/api/countries?period=all'),
+                    fetch(`/api/media${currentSourcesCountry ? '?country=' + currentSourcesCountry : ''}`)
+                ]);
+                const countries = await cRes.json();
+                const mediaList = await mRes.json();
+
+                // Naplň dropdowny krajín
+                const selFilter = document.getElementById('sources-filter-country');
+                const selNew = document.getElementById('new-media-country');
+                
+                let filterHtml = '<option value="">Všetky krajiny</option>';
+                let newHtml = '';
+                countries.forEach(c => {
+                    const sel = c.iso_code === currentSourcesCountry ? 'selected' : '';
+                    filterHtml += `<option value="${c.iso_code}" ${sel}>${c.name_sk} (${c.iso_code})</option>`;
+                    newHtml += `<option value="${c.iso_code}" ${sel}>${c.name_sk} (${c.iso_code})</option>`;
+                });
+                selFilter.innerHTML = filterHtml;
+                selNew.innerHTML = newHtml;
+
+                // Názov hlavičky
+                const activeC = countries.find(c => c.iso_code === currentSourcesCountry);
+                document.getElementById('sources-header-country').innerText = activeC ? `${activeC.name_sk} (${activeC.iso_code})` : 'Všetky krajiny';
+                document.getElementById('sources-count-label').innerText = `Celkovo ${mediaList.length} zdrojov`;
+
+                // Tabuľka zdrojov
+                const tbody = document.getElementById('sources-table-body');
+                let rowsHtml = '';
+                mediaList.forEach(m => {
+                    rowsHtml += `
+                        <tr class="hover:bg-gray-900/50">
+                            <td class="py-2.5 px-3 font-semibold text-white">
+                                <span class="px-2 py-0.5 rounded bg-[#990000] text-white font-mono text-[10px] border border-white/20/60">${m.country_iso}</span>
+                                <span class="ml-1">${m.country_name}</span>
+                            </td>
+                            <td class="py-2.5 px-3">
+                                <a href="${m.website_url}" target="_blank" class="font-medium text-white hover:text-white flex items-center gap-1">
+                                    <span>${m.name}</span>
+                                    <span class="text-[10px] text-gray-500">↗</span>
+                                </a>
+                            </td>
+                            <td class="py-2.5 px-3">
+                                ${m.category === 'telegram' ? `
+                                    <span class="px-2 py-0.5 rounded text-[10px] bg-[#990000] text-white border border-[#990000] font-bold flex items-center gap-1 w-fit">
+                                        <span>✈️</span><span>TELEGRAM</span>
+                                    </span>
+                                ` : `
+                                    <span class="px-2 py-0.5 rounded text-[10px] bg-gray-800 text-gray-300 capitalize">${m.category}</span>
+                                `}
+                            </td>
+                            <td class="py-2.5 px-3 font-mono text-[11px] text-gray-400 max-w-xs truncate" title="${m.rss_url}">
+                                ${m.rss_url}
+                            </td>
+                            <td class="py-2.5 px-3 font-mono text-[11px] text-white font-bold">
+                                ${m.article_count}
+                            </td>
+                            <td class="py-2.5 px-3 text-right">
+                                <button onclick="deleteMedia(${m.id})" class="px-2 py-1 bg-red-900/60 hover:bg-red-800 text-red-200 rounded text-[11px] transition">Odstrániť</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = rowsHtml || '<tr><td colspan="6" class="p-4 text-center text-gray-500">Žiadne zdroje pre zvolený filter.</td></tr>';
+
+            } catch (e) { console.error(e); }
+        }
+
+        function filterSourcesByCountry() {
+            currentSourcesCountry = document.getElementById('sources-filter-country').value;
+            loadManageSources();
+        }
+
+        async function createMedia() {
+            const country_iso = document.getElementById('new-media-country').value;
+            const category = document.getElementById('new-media-type').value;
+            const name = document.getElementById('new-media-name').value.trim();
+            let web_url = document.getElementById('new-media-web').value.trim();
+            const rss_url = document.getElementById('new-media-rss').value.trim();
+
+            if (!name || !rss_url) {
+                alert('Zadaj názov a RSS URL alebo @TelegramHandle.');
+                return;
+            }
+            if (!web_url) {
+                web_url = rss_url.startsWith('@') ? `https://t.me/${rss_url.replace('@','')}` : 'https://...';
+            }
+
+            try {
+                const res = await fetch('/api/media', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        country_iso: country_iso,
+                        name: name,
+                        website_url: web_url,
+                        rss_url: rss_url,
+                        category: category
+                    })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    document.getElementById('new-media-name').value = '';
+                    document.getElementById('new-media-web').value = '';
+                    document.getElementById('new-media-rss').value = '';
+                    alert('Zdroj / Telegram kanál bol úspešne pridaný!');
+                    loadManageSources();
+                    loadStats();
+                    loadCountries();
+                } else {
+                    alert(d.detail || 'Chyba pri ukladaní zdroja.');
+                }
+            } catch (e) { alert('Chyba spojenia pri pridávaní zdroja.'); }
+        }
+
+        async function deleteMedia(id) {
+            if (!confirm('Naozaj odstrániť tento zdroj? Články z neho budú taktiež vymazané.')) return;
+            try {
+                await fetch(`/api/media/${id}`, { method: 'DELETE' });
+                loadManageSources();
+                loadStats();
+                loadCountries();
+            } catch (e) { alert('Chyba pri mazaní zdroja.'); }
+        }
+
+        async function analyzeKeyword() {
+            const inputEl = document.getElementById('keyword-input');
+            const kw = inputEl.value.trim();
+            if (!kw) return;
+            currentQuery = kw;
+
+            const btn = document.getElementById('btn-kw-search');
+            const box = document.getElementById('keyword-result');
+            const totalEl = document.getElementById('kw-total');
+            const expEl = document.getElementById('kw-expanded');
+            const breakdownEl = document.getElementById('kw-breakdown');
+
+            // Aktivácia vizuálnej grafiky načítavania
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-white border-t-transparent animate-spin mr-1"></span><span class="text-[10px]">HĽADÁM...</span>';
+            }
+            if (box) box.classList.remove('hidden');
+            if (totalEl) totalEl.innerHTML = '<span class="text-xs font-telemetry text-gray-400 animate-pulse">Skenujem databázu...</span>';
+            if (expEl) expEl.innerHTML = '<span class="text-[11px] font-telemetry text-[#990000] animate-pulse">● Multilingválna expanzia v 8 jazykoch sveta...</span>';
+            if (breakdownEl) breakdownEl.innerHTML = `
+                <div class="mt-2 p-2 bg-black/40 border border-white/10 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#990000] animate-ping"></span>
+                    <span class="text-[10px] font-telemetry text-gray-300">Prepočítavam výskyty a mapujem krajiny...</span>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`/api/keyword-frequency?keyword=${encodeURIComponent(kw)}&period=${currentPeriod}`);
+                const d = await res.json();
+                
+                if (totalEl) totalEl.innerText = `${d.total_occurrences} článkov`;
+
+                let expText = 'Multilingválne hľadané: ' + (d.expanded_terms ? d.expanded_terms.slice(0, 7).join(', ') : kw);
+                if (expEl) expEl.innerText = expText;
+
+                let breakdownText = '<span class="font-bold text-white">Top krajiny:</span> ';
+                if (!d.breakdown_by_country || d.breakdown_by_country.length === 0) {
+                    breakdownText += '<span class="text-gray-400">žiadny výskyt.</span>';
+                } else {
+                    breakdownText += d.breakdown_by_country.slice(0, 5).map(c => `<span class="text-[#990000] font-bold">${c.name_sk}</span> (${c.count}x)`).join(', ');
+                }
+                if (breakdownEl) breakdownEl.innerHTML = breakdownText;
+
+                loadCountries();
+                loadArticles(currentCountry, kw);
+            } catch (e) { 
+                console.error(e);
+                if (totalEl) totalEl.innerText = 'Chyba';
+                if (breakdownEl) breakdownEl.innerText = 'Chyba pri analýze.';
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'HĽADAŤ';
+                }
+            }
+        }
+
+        function filterCountry(iso, name = '') {
+            currentCountry = iso;
+            document.getElementById('feed-title').innerText = iso ? `Správy: ${name}` : 'Globálny Tok Článkov';
+            updateBadge();
+            loadCountries();
+            loadArticles(currentCountry, currentQuery);
+        }
+
+        // ================= 3D COBE LIVE GLOBE PULSE (Exact 21st.dev Component Engine) =================
+
+        let isGlobePaused = false;
+        let cobeGlobe = null;
+        let cobeAnimationId = null;
+        let cobePhi = 0;
+        let cobePhiOffset = 0;
+        let cobeThetaOffset = 0;
+        let cobeDragOffset = { phi: 0, theta: 0 };
+        let cobePointerInteracting = null;
+        let currentPulseMarkers = [];
+
+        function toggleGlobePause() {
+            isGlobePaused = !isGlobePaused;
+            const btnIcon = document.getElementById('btn-globe-pause-icon');
+            const btnText = document.getElementById('btn-globe-pause-text');
+            const btn = document.getElementById('btn-globe-pause');
+
+            if (isGlobePaused) {
+                btnIcon.innerText = '▶️';
+                btnText.innerText = 'Spustiť rotáciu';
+                btn.classList.add('border-[#990000]', 'text-white');
+            } else {
+                btnIcon.innerText = '⏸️';
+                btnText.innerText = 'Zastaviť rotáciu';
+                btn.classList.remove('border-[#990000]', 'text-white');
+            }
+        }
+
+        async function initOrUpdateGlobe() {
+            try {
+                fetch('/api/alerts').then(r => r.json()).then(al => { cachedSystemAlerts = al; renderRadarActiveWords(); }).catch(() => {});
+                let url = `/api/countries?period=${globePeriod}&alerts_only=true`;
+                if (globeQuery) url += `&query=${encodeURIComponent(globeQuery)}`;
+                const res = await fetch(url);
+                const countries = await res.json();
+
+                let maxCount = 1;
+                countries.forEach(c => {
+                    if (c.article_count > maxCount) maxCount = c.article_count;
+                });
+
+                // Vytvor markers presne podľa 21st.dev interface: { id, location: [lat, lon], delay, name, count }
+                currentPulseMarkers = [];
+                const topPillsContainer = document.getElementById('globe-top-countries-pills');
+                let pillsHtml = '';
+
+                let markerIndex = 0;
+                countries.forEach(c => {
+                    if (c.lat && c.lon && c.article_count > 0) {
+                        currentPulseMarkers.push({
+                            id: `pulse-${c.iso_code}`,
+                            iso: c.iso_code,
+                            location: [c.lat, c.lon],
+                            delay: (markerIndex % 4) * 0.4,
+                            name: c.name_sk,
+                            count: c.article_count
+                        });
+                        markerIndex++;
+                    }
+                });
+
+                document.getElementById('globe-markers-count').innerText = currentPulseMarkers.length;
+
+                // Vykresli najsilnejšie pulzy v bočnom paneli
+                countries.slice(0, 12).forEach(c => {
+                    if (c.article_count > 0) {
+                        pillsHtml += `
+                            <button onclick="rotateGlobeTo('${c.iso_code}', ${c.lat}, ${c.lon}, '${c.name_sk}', ${c.article_count})" 
+                                    class="px-2.5 py-1 bg-gray-100 hover:bg-[#990000] border border-gray-300 hover:border-[#990000] text-xs text-black hover:text-white flex items-center gap-1.5 transition font-telemetry font-bold group">
+                                <span class="w-2 h-2 rounded-full bg-[#990000] group-hover:bg-white inline-block"></span>
+                                <span>${c.name_sk}</span>
+                                <span class="bg-black text-white px-1.5 py-0.2 text-[10px] font-mono">${c.article_count}</span>
+                            </button>
+                        `;
+                    }
+                });
+                topPillsContainer.innerHTML = pillsHtml || '<div class="text-xs text-gray-500">Žiadne aktívne správy.</div>';
+
+                // Render HTML vrstvy pulzujúcich tmavočervených bodov (21st.dev template)
+                renderPulseMarkersHTML();
+
+                // Ak Cobe už existuje, len aktualizujeme jeho markers
+                if (cobeGlobe) {
+                    cobeGlobe.update({
+                        markers: currentPulseMarkers.map(m => ({ location: m.location, size: m.size || 0.045, id: m.id }))
+                    });
+                }
+
+                // Inicializácia Cobe Canvasu presne podľa 21st.dev šablóny
+                if (!cobeGlobe && window.createGlobe) {
+                    const canvas = document.getElementById('cobe-canvas');
+                    const width = canvas.parentElement ? canvas.parentElement.offsetWidth : 520;
+
+                    // Pointer / Drag listener presne podľa šablóny
+                    canvas.addEventListener('pointerdown', (e) => {
+                        cobePointerInteracting = { x: e.clientX, y: e.clientY };
+                        canvas.style.cursor = 'grabbing';
+                        isGlobePaused = true;
+                    });
+
+                    window.addEventListener('pointerup', () => {
+                        if (cobePointerInteracting !== null) {
+                            cobePhiOffset += cobeDragOffset.phi;
+                            cobeThetaOffset += cobeDragOffset.theta;
+                            cobeDragOffset = { phi: 0, theta: 0 };
+                        }
+                        cobePointerInteracting = null;
+                        canvas.style.cursor = 'grab';
+                        const btnText = document.getElementById('btn-globe-pause-text');
+                        if (btnText && btnText.innerText === 'Zastaviť rotáciu') {
+                            isGlobePaused = false;
+                        }
+                    });
+
+                    window.addEventListener('pointermove', (e) => {
+                        if (cobePointerInteracting !== null) {
+                            cobeDragOffset = {
+                                phi: (e.clientX - cobePointerInteracting.x) / 300,
+                                theta: (e.clientY - cobePointerInteracting.y) / 1000,
+                            };
+                        }
+                    }, { passive: true });
+
+                    // Konfigurácia presne z 21st.dev s tmavočervenými bodkami a zreteľnou pevninou
+                    cobeGlobe = window.createGlobe(canvas, {
+                        devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+                        width: width * 2,
+                        height: width * 2,
+                        phi: 0,
+                        theta: 0.2,
+                        dark: 1,
+                        diffuse: 1.2,
+                        mapSamples: 20000,
+                        mapBrightness: 12,
+                        baseColor: [1, 1, 1], // Čistá biela bodová sieť
+                        markerColor: [0.6, 0.0, 0.0], // Krvavo červená (#990000)
+                        glowColor: [0, 0, 0], // Čistý pitch black glow
+                        markerElevation: 0,
+                        markers: currentPulseMarkers.map(m => ({ location: m.location, size: m.size || 0.05, id: m.id })),
+                        arcs: [],
+                        arcColor: [0.6, 0.0, 0.0],
+                        arcWidth: 0.5,
+                        arcHeight: 0.25,
+                        opacity: 0.85,
+                    });
+
+                    function animate() {
+                        if (!isGlobePaused) cobePhi += 0.003;
+                        const currentPhi = cobePhi + cobePhiOffset + cobeDragOffset.phi;
+                        const currentTheta = 0.2 + cobeThetaOffset + cobeDragOffset.theta;
+
+                        if (cobeGlobe) {
+                            cobeGlobe.update({
+                                phi: currentPhi,
+                                theta: currentTheta,
+                                markers: currentPulseMarkers.map(m => ({ location: m.location, size: m.size || 0.045, id: m.id }))
+                            });
+                        }
+                        updatePulseMarkersPosition(currentPhi, currentTheta);
+                        cobeAnimationId = requestAnimationFrame(animate);
+                    }
+
+                    animate();
+                    setTimeout(() => { if (canvas) canvas.style.opacity = "1"; }, 150);
+                }
+
+                // Vždy po príchode na stránku začíname so všetkými krajinami sveta
+                showAllCountriesGlobeArticles();
+
+            } catch (e) { console.error('Globe error:', e); }
+        }
+
+        function renderPulseMarkersHTML() {
+            const overlay = document.getElementById('cobe-html-overlay');
+            if (!overlay) return;
+            let html = '';
+            currentPulseMarkers.forEach(m => {
+                html += `
+                    <div id="cobe-pulse-${m.id}" 
+                         class="cobe-pulse-marker group" 
+                         style="opacity: 0;"
+                         onclick="rotateGlobeTo('${m.iso}', ${m.location[0]}, ${m.location[1]}, '${m.name}', ${m.count})"
+                         title="📍 ${m.name}: ${m.count} správ (Klikni pre detail a otočenie)">
+                        <span class="cobe-ring-1" style="animation-delay: ${m.delay}s;"></span>
+                        <span class="cobe-ring-2" style="animation-delay: ${m.delay + 0.5}s;"></span>
+                        <span class="cobe-core-dot"></span>
+                        <span class="absolute bottom-full mb-1 hidden group-hover:flex items-center gap-1 bg-gray-950/95 text-white text-[10px] font-bold px-2 py-0.5 rounded border border-red-700 whitespace-nowrap shadow-xl shadow-black z-50">
+                            <span>${m.name}</span>
+                            <span class="text-red-400 font-mono">${m.count}</span>
+                        </span>
+                    </div>
+                `;
+            });
+            overlay.innerHTML = html;
+        }
+
+        function updatePulseMarkersPosition(phi, theta) {
+            const overlay = document.getElementById('cobe-html-overlay');
+            if (!overlay || !currentPulseMarkers.length) return;
+            const size = overlay.offsetWidth;
+            const radius = size / 2;
+
+            currentPulseMarkers.forEach(m => {
+                const el = document.getElementById(`cobe-pulse-${m.id}`);
+                if (!el) return;
+
+                const lat = (m.location[0] * Math.PI) / 180;
+                const lon = (m.location[1] * Math.PI) / 180 - Math.PI;
+
+                // 3D smerový vektor bodu presne podľa funkcie _([lat, lon]) z Cobe:
+                // _([lat, lon]): x = -sin(lat)*sin(lon), y = cos(lat), z = sin(lat)*cos(lon)
+                // Tu Math.sin(lat) je cos(zemepisnej sirky) a Math.cos(lat) je sin(zemepisnej sirky) v beznom zmysle:
+                // Cobe pouziva: v = lat*PI/180 (od rovníka 0..PI/2), s = sin(v), ce = cos(v)
+                const v = lat;
+                const e = lon;
+                const s = Math.sin(v);
+                const ce = Math.cos(v);
+                const se_e = Math.sin(e);
+                const ce_e = Math.cos(e);
+
+                // Bod na sfére pred rotáciou [x0, y0, z0]
+                const x0 = -s * se_e;
+                const y0 = ce;
+                const z0 = s * ce_e;
+
+                // Transformácia shaderu v Cobe:
+                // C = cos(phi)*x0 + sin(phi)*z0
+                // F = sin(phi)*sin(theta)*x0 + cos(theta)*y0 - cos(phi)*sin(theta)*z0
+                // visible = -sin(phi)*cos(theta)*x0 + sin(theta)*y0 + cos(phi)*cos(theta)*z0 >= 0
+                const cosPhi = Math.cos(phi);
+                const sinPhi = Math.sin(phi);
+                const cosTheta = Math.cos(theta);
+                const sinTheta = Math.sin(theta);
+
+                const C = cosPhi * x0 + sinPhi * z0;
+                const F = sinPhi * sinTheta * x0 + cosTheta * y0 - cosPhi * sinTheta * z0;
+                const visible = -sinPhi * cosTheta * x0 + sinTheta * y0 + cosPhi * cosTheta * z0;
+
+                // Ak je bod na privrátenej strane glóbusu k pozorovateľovi:
+                if (visible >= 0.05 || (C * C + F * F) < 0.64) {
+                    const screenX = radius + C * radius;
+                    const screenY = radius - F * radius;
+                    el.style.left = `${screenX}px`;
+                    el.style.top = `${screenY}px`;
+                    el.style.opacity = visible >= 0.05 ? "1" : "0.3";
+                } else {
+                    el.style.opacity = "0";
+                }
+            });
+        }
+
+        function rotateGlobeTo(iso, lat, lon, name, count) {
+            // Presný prepočet zemepisnej dĺžky na uhol phi a theta pre Cobe
+            // Shader v Cobe: _([lat, lon]) -> [-sin(lat)*sin(lon-PI), cos(lat), sin(lat)*cos(lon-PI)]
+            // Preto stred prednej plochy z=1 nastane presne pri phi = -lon*PI/180 + PI:
+            const targetPhi = -(lon * Math.PI) / 180 + Math.PI;
+            const targetTheta = (lat * Math.PI) / 180;
+            cobePhi = targetPhi;
+            cobePhiOffset = 0;
+            cobeThetaOffset = targetTheta - 0.2;
+            cobeDragOffset = { phi: 0, theta: 0 };
+            isGlobePaused = true;
+            const btnIcon = document.getElementById('btn-globe-pause-icon');
+            const btnText = document.getElementById('btn-globe-pause-text');
+            const btn = document.getElementById('btn-globe-pause');
+            if (btnIcon && btnText && btn) {
+                btnIcon.innerText = '▶️';
+                btnText.innerText = 'Spustiť rotáciu';
+                btn.classList.add('border-[#990000]', 'text-white');
+            }
+            // Pri kliknutí na novú krajinu zrušíme predchádzajúci filter, aby sa načítali všetky správy novej krajiny
+            radarActiveFilterWords.clear();
+            toggleRadarWordInput(false);
+            loadGlobeCountryArticles(iso, name, count);
+        }
+
+        // --- Správa kľúčových slov a filtrovania v Radare Krajiny ---
+        let currentGlobeCountryArticles = [];
+        let currentSelectedCountryIso = '';
+        let currentSelectedCountryName = '';
+        let currentCountryTotalCount = 0;
+        let radarActiveFilterWords = new Set(); // Množina aktívne zvolených slov (multi-select)
+        let cachedSystemAlerts = []; // Uložené systémové alarmy z /api/alerts
+
+        function getRadarCustomWords() {
+            try {
+                return JSON.parse(localStorage.getItem('tep_radar_custom_words') || '[]');
+            } catch (e) { return []; }
+        }
+
+        function saveRadarCustomWords(words) {
+            localStorage.setItem('tep_radar_custom_words', JSON.stringify(words));
+        }
+
+        async function loadRadarSystemAlertsPresets() {
+            const listEl = document.getElementById('radar-preset-alerts-list');
+            if (!listEl) return;
+            try {
+                if (!cachedSystemAlerts || cachedSystemAlerts.length === 0) {
+                    const res = await fetch('/api/alerts');
+                    cachedSystemAlerts = await res.json();
+                }
+                const activeCustom = getRadarCustomWords().map(w => w.toLowerCase());
+                if (cachedSystemAlerts.length === 0) {
+                    listEl.innerHTML = '<span class="text-[10px] text-gray-500 italic">Žiadne vytvorené alarmy</span>';
+                    return;
+                }
+                let html = '';
+                cachedSystemAlerts.forEach(al => {
+                    const isSelected = isWordActiveInFilter(al.name);
+                    const isAlreadyAdded = activeCustom.includes(al.name.toLowerCase());
+                    html += `
+                        <button onclick="togglePresetAlertFilter('${al.name.replace(/'/g, "\'")}', '${(al.query_pattern || '').replace(/'/g, "\'")}')" 
+                                class="px-2 py-0.5 rounded-md text-[10.5px] font-medium flex items-center gap-1 border transition ${
+                                    isSelected 
+                                    ? 'bg-red-600 border-red-400 text-white shadow-sm ring-1 ring-red-400' 
+                                    : (isAlreadyAdded 
+                                        ? 'bg-red-950/60 border-red-800 text-red-300' 
+                                        : 'bg-gray-900 hover:bg-red-950/90 border-gray-700 hover:border-red-600 text-gray-200 hover:text-white')
+                                }"
+                                title="${isSelected ? 'Tento alarm je zvolený (kliknutím ho vypneš)' : 'Kliknutím pridáš/zapneš tento alarm do filtra'}">
+                            <span class="w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white animate-ping' : 'bg-red-500'}"></span>
+                            <span>${al.name}</span>
+                            ${isSelected ? '<span class="text-[9px] text-white font-bold">✓</span>' : '<span class="text-[9px] text-gray-400">➕</span>'}
+                        </button>
+                    `;
+                });
+                listEl.innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                listEl.innerHTML = '<span class="text-[10px] text-red-400">Chyba načítania alarmov</span>';
+            }
+        }
+
+        function toggleRadarWordInput(forceState) {
+            const box = document.getElementById('radar-add-word-box');
+            if (!box) return;
+            const willShow = forceState !== undefined ? forceState : box.classList.contains('hidden');
+            if (willShow) {
+                box.classList.remove('hidden');
+                const inp = document.getElementById('radar-new-word-input');
+                if (inp) { inp.value = ''; inp.focus(); }
+                loadRadarSystemAlertsPresets();
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        function isWordActiveInFilter(word) {
+            if (!word || radarActiveFilterWords.size === 0) return false;
+            const wLower = word.toLowerCase();
+            for (let act of radarActiveFilterWords) {
+                const actLower = act.toLowerCase();
+                if (actLower === wLower || actLower.startsWith(wLower) || wLower.startsWith(actLower)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Zozbieraj všetky dostupné slová pre krajinu (systémové alarmy + detegované + custom)
+        function getAllAvailableRadarWords() {
+            const words = new Set();
+            if (cachedSystemAlerts && cachedSystemAlerts.length > 0) {
+                cachedSystemAlerts.forEach(al => words.add(al.name));
+            }
+            getRadarCustomWords().forEach(w => words.add(w));
+            currentGlobeCountryArticles.forEach(a => {
+                const kws = getArticleDetectedKeywords(a);
+                kws.forEach(k => words.add(k.alertName || k.word));
+            });
+            return Array.from(words);
+        }
+
+        // Zvoľ naraz VŠETKY kľúčové slová
+        async function selectAllRadarWords() {
+            if (!cachedSystemAlerts || cachedSystemAlerts.length === 0) {
+                try {
+                    const res = await fetch('/api/alerts');
+                    cachedSystemAlerts = await res.json();
+                } catch(e) {}
+            }
+            const allWords = getAllAvailableRadarWords();
+            radarActiveFilterWords.clear();
+            allWords.forEach(w => radarActiveFilterWords.add(w));
+            
+            toggleRadarWordInput(false);
+            renderRadarActiveWords();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        // Kliknutie na preset alarm v dialógu (zapne/vypne v multi-selecte)
+        function togglePresetAlertFilter(alertName, queryPattern) {
+            let words = getRadarCustomWords();
+            if (!words.some(w => w.toLowerCase() === alertName.toLowerCase())) {
+                words.push(alertName);
+                saveRadarCustomWords(words);
+            }
+
+            if (isWordActiveInFilter(alertName)) {
+                // Odstránime zo zvolených
+                for (let act of Array.from(radarActiveFilterWords)) {
+                    if (act.toLowerCase() === alertName.toLowerCase() || act.toLowerCase().startsWith(alertName.toLowerCase()) || alertName.toLowerCase().startsWith(act.toLowerCase())) {
+                        radarActiveFilterWords.delete(act);
+                    }
+                }
+            } else {
+                radarActiveFilterWords.add(alertName);
+            }
+
+            renderRadarActiveWords();
+            loadRadarSystemAlertsPresets();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        function addRadarCustomWord() {
+            const inp = document.getElementById('radar-new-word-input');
+            if (!inp) return;
+            const word = inp.value.trim();
+            if (!word) return;
+
+            let words = getRadarCustomWords();
+            if (!words.some(w => w.toLowerCase() === word.toLowerCase())) {
+                words.push(word);
+                saveRadarCustomWords(words);
+            }
+            toggleRadarWordInput(false);
+            // Pridáme a zapneme v aktívnom filtri
+            radarActiveFilterWords.add(word);
+            renderRadarActiveWords();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        function removeRadarCustomWord(word, event) {
+            if (event) event.stopPropagation();
+            let words = getRadarCustomWords().filter(w => w.toLowerCase() !== word.toLowerCase());
+            saveRadarCustomWords(words);
+            
+            for (let act of Array.from(radarActiveFilterWords)) {
+                if (act.toLowerCase() === word.toLowerCase()) {
+                    radarActiveFilterWords.delete(act);
+                }
+            }
+            renderRadarActiveWords();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        // Kliknutie na konkrétny tag kľúčového slova (zapína / vypína dané slovo)
+        function toggleRadarFilterWord(word) {
+            const wLower = (word || '').toLowerCase();
+            let foundKey = null;
+            for (let act of radarActiveFilterWords) {
+                const actLower = act.toLowerCase();
+                if (actLower === wLower || actLower.startsWith(wLower) || wLower.startsWith(actLower)) {
+                    foundKey = act;
+                    break;
+                }
+            }
+
+            if (foundKey) {
+                // Vypneme toto jedno slovo
+                radarActiveFilterWords.delete(foundKey);
+            } else {
+                // Zapneme toto slovo do filtra
+                radarActiveFilterWords.add(word);
+            }
+
+            renderRadarActiveWords();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        function clearRadarFilter() {
+            radarActiveFilterWords.clear();
+            renderRadarActiveWords();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        // Zistenie kľúčového vyhľadávacieho dotazu pre viacero zvolených slov naraz
+        function getSearchQueryForActiveWords() {
+            if (radarActiveFilterWords.size === 0) return '';
+            const queryParts = [];
+            radarActiveFilterWords.forEach(word => {
+                const wLower = word.toLowerCase();
+                if (cachedSystemAlerts && cachedSystemAlerts.length > 0) {
+                    const found = cachedSystemAlerts.find(al => al.name.toLowerCase() === wLower);
+                    if (found && found.query_pattern) {
+                        const pats = found.query_pattern.split('|').map(p => p.trim()).filter(Boolean);
+                        if (pats.length > 0) {
+                            queryParts.push(pats[0]);
+                            return;
+                        }
+                    }
+                }
+                queryParts.push(word.split('(')[0].trim());
+            });
+            // Spojíme cez ' OR ' aby FTS5 multilingválny expander vyhľadal články obsahujúce aspoň jedno z aktívnych slov
+            return queryParts.join(' OR ');
+        }
+
+        // Zistenie zoznamu záchytov kľúčových slov a alarmov pre konkrétny článok
+        function getArticleDetectedKeywords(a) {
+            const detected = [];
+            const seen = new Set();
+
+            // 1. Oficiálne alarmy z DB (matched_alerts)
+            if (a.matched_alerts && a.matched_alerts.length > 0) {
+                a.matched_alerts.forEach(al => {
+                    const key = (al.matched_word || al.alert_name).toLowerCase();
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        detected.push({
+                            type: 'alert',
+                            alertName: al.alert_name,
+                            word: al.matched_word || al.alert_name
+                        });
+                    }
+                });
+            }
+
+            // 2. Skontroluj text článku oproti uloženým kľúčovým slovám / vybraným alarmom (custom words)
+            const textToSearch = [
+                a.title_orig || '',
+                a.title_sk || '',
+                a.title_en || '',
+                a.perex_orig || '',
+                a.perex_sk || ''
+            ].join(' ').toLowerCase();
+
+            const customWords = getRadarCustomWords();
+            customWords.forEach(w => {
+                const wLower = w.toLowerCase();
+                
+                let matchedInAlert = false;
+                if (cachedSystemAlerts && cachedSystemAlerts.length > 0) {
+                    const foundAl = cachedSystemAlerts.find(al => al.name.toLowerCase() === wLower);
+                    if (foundAl && foundAl.query_pattern) {
+                        const patterns = foundAl.query_pattern.split('|').map(p => p.trim().toLowerCase()).filter(Boolean);
+                        for (let p of patterns) {
+                            if (textToSearch.includes(p)) {
+                                matchedInAlert = true;
+                                if (!seen.has(wLower)) {
+                                    seen.add(wLower);
+                                    detected.push({
+                                        type: 'preset_alert',
+                                        alertName: foundAl.name,
+                                        word: p
+                                    });
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!matchedInAlert && textToSearch.includes(wLower) && !seen.has(wLower)) {
+                    seen.add(wLower);
+                    detected.push({
+                        type: 'custom',
+                        alertName: 'Filter',
+                        word: w
+                    });
+                }
+            });
+
+            // 3. Ak je zadaný globálny query filter na glóbuse alebo v článku
+            if (a.searched_word && !seen.has(a.searched_word.toLowerCase())) {
+                seen.add(a.searched_word.toLowerCase());
+                detected.push({
+                    type: 'search',
+                    alertName: 'Hľadané',
+                    word: a.searched_word
+                });
+            }
+
+            return detected;
+        }
+
+        function openRadarWordsModal() {
+            const modal = document.getElementById('radar-words-modal');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            renderRadarModalContent();
+        }
+
+        function closeRadarWordsModal() {
+            const modal = document.getElementById('radar-words-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function addRadarCustomWordFromModal() {
+            const inp = document.getElementById('modal-radar-new-word-input');
+            if (!inp) return;
+            const word = inp.value.trim();
+            if (!word) return;
+
+            let words = getRadarCustomWords();
+            if (!words.some(w => w.toLowerCase() === word.toLowerCase())) {
+                words.push(word);
+                saveRadarCustomWords(words);
+            }
+            inp.value = '';
+            radarActiveFilterWords.add(word);
+            renderRadarModalContent();
+            renderRadarActiveWords();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        function renderRadarModalContent() {
+            const presetGrid = document.getElementById('modal-preset-alerts-grid');
+            const customGrid = document.getElementById('modal-custom-words-grid');
+            const customSection = document.getElementById('modal-custom-words-section');
+            const statusText = document.getElementById('modal-words-status-text');
+
+            if (statusText) {
+                if (radarActiveFilterWords.size === 0) {
+                    statusText.innerHTML = '<span class="text-black font-bold">Stav: VŠETKY SLOVÁ (Filter vypnutý)</span>';
+                } else {
+                    statusText.innerHTML = `<span class="text-[#990000] font-bold">Aktívny výber: ${radarActiveFilterWords.size} vybraných tém</span>`;
+                }
+            }
+
+            // Systémové alarmy
+            if (presetGrid) {
+                if (!cachedSystemAlerts || cachedSystemAlerts.length === 0) {
+                    presetGrid.innerHTML = '<div class="text-xs text-gray-500">Načítavam alarmy...</div>';
+                } else {
+                    let html = '';
+                    cachedSystemAlerts.forEach(al => {
+                        const isSelected = isWordActiveInFilter(al.name);
+                        html += `
+                            <button onclick="toggleRadarFilterWord('${al.name.replace(/'/g, "\'")}'); renderRadarModalContent();" 
+                                    class="p-2.5 text-left border text-xs font-telemetry flex items-center justify-between transition ${
+                                        isSelected 
+                                        ? 'bg-[#990000] border-[#990000] text-white font-bold shadow-md' 
+                                        : 'bg-white hover:bg-gray-100 border-gray-300 text-black'
+                                    }">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 ${isSelected ? 'bg-white' : 'bg-[#990000]'}"></span>
+                                    <span>${al.name}</span>
+                                </div>
+                                <span class="text-[10px] uppercase font-bold px-1.5 py-0.5 ${isSelected ? 'bg-black text-white' : 'bg-gray-100 text-gray-500'}">
+                                    ${isSelected ? 'ON' : 'OFF'}
+                                </span>
+                            </button>
+                        `;
+                    });
+                    presetGrid.innerHTML = html;
+                }
+            }
+
+            // Custom pridané slová
+            const customWords = getRadarCustomWords();
+            if (customSection && customGrid) {
+                if (customWords.length === 0) {
+                    customSection.classList.add('hidden');
+                } else {
+                    customSection.classList.remove('hidden');
+                    let html = '';
+                    customWords.forEach(cw => {
+                        const isSelected = isWordActiveInFilter(cw);
+                        html += `
+                            <div class="inline-flex items-center border ${
+                                isSelected ? 'bg-[#990000] border-[#990000] text-white font-bold' : 'bg-gray-100 border-gray-300 text-black'
+                            } text-xs font-telemetry">
+                                <button onclick="toggleRadarFilterWord('${cw.replace(/'/g, "\'")}'); renderRadarModalContent();" class="px-2.5 py-1 flex items-center gap-1.5">
+                                    <span>${cw}</span>
+                                    <span class="text-[9px] font-bold ${isSelected ? 'text-white' : 'text-gray-400'}">(${isSelected ? 'ON' : 'OFF'})</span>
+                                </button>
+                                <button onclick="removeRadarCustomWord('${cw.replace(/'/g, "\'")}', event); renderRadarModalContent();" 
+                                        class="px-2 py-1 border-l ${isSelected ? 'border-red-400 hover:bg-black' : 'border-gray-300 hover:bg-red-600 hover:text-white'} transition text-[10px]" title="Zmazať slovo">✕</button>
+                            </div>
+                        `;
+                    });
+                    customGrid.innerHTML = html;
+                }
+            }
+        }
+
+        function renderRadarActiveWords() {
+            const badge = document.getElementById('btn-words-count-badge');
+            const previewContainer = document.getElementById('radar-active-preview-chips');
+            const clearBtn = document.getElementById('btn-clear-all-words');
+
+            if (radarActiveFilterWords.size === 0) {
+                if (badge) badge.innerText = 'VŠETKY';
+                if (badge) badge.className = 'bg-black text-white px-1.5 py-0.2 text-[9px] font-bold';
+                if (clearBtn) clearBtn.classList.add('hidden');
+                if (previewContainer) previewContainer.innerHTML = '<span class="text-[10px] font-telemetry text-gray-400 italic">● Zobrazujú sa správy zo všetkých kľúčových slov a alarmov</span>';
+            } else {
+                if (badge) badge.innerText = `${radarActiveFilterWords.size} AKTÍVNYCH`;
+                if (badge) badge.className = 'bg-[#990000] text-white px-1.5 py-0.2 text-[9px] font-bold';
+                if (clearBtn) clearBtn.classList.remove('hidden');
+
+                if (previewContainer) {
+                    let html = '<span class="text-[10px] font-telemetry text-gray-500 font-bold uppercase mr-1">Filter:</span>';
+                    Array.from(radarActiveFilterWords).slice(0, 5).forEach(w => {
+                        html += `
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.2 bg-[#990000] text-white font-telemetry text-[9.5px] font-bold">
+                                <span>${w}</span>
+                                <button onclick="toggleRadarFilterWord('${w.replace(/'/g, "\'")}')" class="hover:text-black ml-0.5">✕</button>
+                            </span>
+                        `;
+                    });
+                    if (radarActiveFilterWords.size > 5) {
+                        html += `<span class="text-[9px] font-telemetry text-gray-500">+${radarActiveFilterWords.size - 5} ďalších</span>`;
+                    }
+                    previewContainer.innerHTML = html;
+                }
+            }
+        }
+
+        function renderFilteredGlobeArticles() {
+            const container = document.getElementById('globe-country-articles');
+            const countEl = document.getElementById('globe-selected-count');
+            if (!container) return;
+
+            let filtered = currentGlobeCountryArticles;
+
+            if (countEl) {
+                const totalToShow = currentCountryTotalCount || filtered.length;
+                if (radarActiveFilterWords.size > 0) {
+                    countEl.innerHTML = `<span class="text-white">${filtered.length} NÁJDENÝCH</span> / ${totalToShow}`;
+                } else {
+                    countEl.innerText = `${totalToShow} DEPEŠÍ`;
+                }
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 px-4 bg-gray-50 border-2 border-gray-200">
+                        <div class="text-2xl mb-1 text-black font-headline uppercase font-bold">ŽIADNE NÁJDENÉ DEPEŠE</div>
+                        <div class="text-xs font-telemetry text-gray-600 mb-3">Pre vybrané kľúčové slová sa v tomto časovom okne nenašiel článok.</div>
+                        <button onclick="clearRadarFilter()" class="px-4 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase transition">
+                            ✕ ZRUŠIŤ VÝBER (ZOBRAZIŤ VŠETKO)
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(a => {
+                const detected = getArticleDetectedKeywords(a);
+
+
+
+                html += `
+                    <div onclick="openArticleModal(${a.id})" class="p-4 bg-white border-b-2 border-gray-100 hover:bg-gray-50 cursor-pointer transition group">
+                        <div class="flex justify-between items-center text-xs font-telemetry text-gray-500 mb-1">
+                            <span class="font-bold text-[#990000] flex items-center gap-1.5 uppercase">
+                                ${(a.url && a.url.includes('t.me')) || (a.media_name && a.media_name.includes('TG')) ? '<span class="px-1 py-0.2 bg-[#990000] text-white border border-[#990000] rounded text-[9px] font-bold">✈️ TG</span>' : '<span class="w-2 h-2 rounded-full bg-[#990000]"></span>'}
+                                <span class="text-black group-hover:text-[#990000] transition font-bold">${a.media_name}</span>
+                                ${!currentSelectedCountryIso && a.country_name ? `<span class="px-1.5 py-0.2 bg-gray-100 border border-gray-300 text-gray-700 text-[10px] font-mono">${a.country_name} (${a.country_iso})</span>` : ''}
+                            </span>
+                            <div class="text-[10px] font-telemetry text-gray-500 flex items-center gap-1.5 flex-wrap justify-end">
+                                ${a.published_at ? `<span title="Čas uverejnenia médiom">🕒 ${formatTelemetryDate(a.published_at)}</span>` : ''}
+                                ${a.scraped_at ? `<span class="text-gray-400" title="Čas zachytenia naším systémom">📡 ${formatTelemetryDate(a.scraped_at)}</span>` : ''}
+                            </div>
+                        </div>
+                        
+                        <!-- Esquire Headline: Bold Uppercase Condensed Black on White (1:1 ako predloha) -->
+                        <div class="text-lg font-headline uppercase text-black mb-1.5 leading-tight group-hover:text-[#990000] transition font-bold tracking-tight">
+                            ${a.title_orig}
+                        </div>
+
+                        <!-- Čistý decentný badge alarmu (iba keď článok reálne spustil alarm) -->
+                        ${(() => {
+                            // Ak má článok oficiálny alarm z databázy
+                            if (a.matched_alerts && a.matched_alerts.length > 0) {
+                                let badges = '';
+                                a.matched_alerts.forEach(al => {
+                                    badges += `
+                                        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[#990000] text-white text-[10px] font-telemetry font-bold uppercase tracking-wider mr-1.5 mb-1.5 shadow-sm">
+                                            <span class="w-1.5 h-1.5 bg-white"></span>
+                                            <span>${al.alert_name}</span>
+                                            <span class="bg-black text-white px-1 font-mono text-[9.5px]">${al.matched_word || al.alert_name}</span>
+                                        </span>
+                                    `;
+                                });
+                                return `<div class="flex flex-wrap items-center mb-1">${badges}</div>`;
+                            }
+                            return '';
+                        })()}
+
+                        <!-- Preklady: SK na bielom pozadí s čiernym textom, EN na červenom pozadí s bielym textom -->
+                        ${a.title_sk && a.title_sk !== a.title_orig ? `
+                            <div class="text-xs font-editorial text-black bg-white p-2.5 border-l-4 border-black border-t border-b border-r border-gray-200 mb-1.5 leading-relaxed shadow-sm">
+                                <span class="font-telemetry font-bold text-[9px] uppercase bg-[#990000] text-white px-1.5 py-0.5 mr-1.5">SK</span>
+                                <span class="text-black font-bold text-[13px]">${a.title_sk}</span>
+                            </div>
+                        ` : ''}
+
+                        ${a.title_en && a.title_en !== a.title_orig ? `
+                            <div class="text-xs font-editorial text-white bg-[#990000] p-2.5 border border-[#990000] mb-1.5 leading-relaxed shadow-sm">
+                                <span class="font-telemetry font-bold text-[9px] uppercase bg-black text-white px-1.5 py-0.5 mr-1.5">EN</span>
+                                <span class="text-white font-medium text-[13px]">${a.title_en}</span>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="mt-2 text-[10px] font-telemetry text-gray-500 flex items-center justify-between pt-1">
+                            <span class="text-gray-500 group-hover:text-black transition">📄 PREPIS ČLÁNKU</span>
+                            <span class="text-[#990000] font-bold">ČÍTAŤ ČLÁNOK →</span>
+                        </div>
+                    </div>
+                `;
+            });
+            // Pridáme tlačidlo Načítať ďalšie pre Intelligence Column v 3D glóbuse
+            if (currentGlobeCountryArticles.length >= 50) {
+                html += `
+                    <div id="globe-load-more-container" class="pt-3 pb-1 text-center">
+                        <button onclick="loadMoreGlobeArticles()" id="btn-load-more-globe" class="w-full py-2.5 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 border border-black">
+                            <span>➕</span> NAČÍTAŤ ĎALŠIE DEPEŠE (+50)
+                        </button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        async function loadMoreGlobeArticles() {
+            const btn = document.getElementById('btn-load-more-globe');
+            const loadMoreWrapper = document.getElementById('globe-load-more-container');
+            const container = document.getElementById('globe-country-articles');
+            if (!btn || !container) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="inline-block w-3 h-3 border-2 border-white border-t-transparent animate-spin mr-2"></span> SŤAHUJEM ĎALŠIE...';
+
+            try {
+                let activeQuery = globeQuery || '';
+                if (radarActiveFilterWords && radarActiveFilterWords.size > 0) {
+                    activeQuery = getSearchQueryForActiveWords();
+                }
+                let url = `/api/articles?period=${globePeriod}&limit=50&offset=${currentGlobeArticlesOffset}&alerts_only=true`;
+                if (currentSelectedCountryIso) url += `&country=${currentSelectedCountryIso}`;
+                if (activeQuery) url += `&query=${encodeURIComponent(activeQuery)}`;
+
+                const res = await fetch(url);
+                const moreArticles = await res.json();
+
+                if (moreArticles.length === 0) {
+                    if (loadMoreWrapper) {
+                        loadMoreWrapper.innerHTML = '<div class="text-center py-3 text-gray-500 text-[11px] font-telemetry uppercase tracking-wider">● Všetky depeše boli načítané</div>';
+                    }
+                    return;
+                }
+
+                currentGlobeArticlesOffset += moreArticles.length;
+                currentGlobeCountryArticles = currentGlobeCountryArticles.concat(moreArticles);
+                renderFilteredGlobeArticles();
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.innerHTML = 'Chyba načítania. Skúsiť znova ↻';
+            }
+        }
+
+                function showAllCountriesGlobeArticles() {
+            radarActiveFilterWords.clear();
+            toggleRadarWordInput(false);
+            loadGlobeCountryArticles('', 'Všetky krajiny sveta', 0);
+        }
+
+        async function loadGlobeCountryArticles(iso, name, count) {
+            currentSelectedCountryIso = iso || '';
+            currentSelectedCountryName = name || (iso ? name : 'Všetky krajiny sveta');
+            currentCountryTotalCount = count || 0;
+
+            const countryTitleEl = document.getElementById('globe-selected-country');
+            if (countryTitleEl) {
+                if (iso) {
+                    countryTitleEl.innerHTML = `<span>📍 ${name} (${iso})</span>`;
+                } else {
+                    countryTitleEl.innerHTML = `<span>Všetky krajiny sveta</span>`;
+                }
+            }
+
+            const countEl = document.getElementById('globe-selected-count');
+            if (countEl) {
+                countEl.innerText = count ? `${count} správ` : 'Načítavam...';
+            }
+
+            const container = document.getElementById('globe-country-articles');
+            const wordsHeader = document.getElementById('globe-radar-active-words');
+            if (container) container.innerHTML = `
+                <div class="py-20 px-6 flex flex-col items-center justify-center space-y-4 bg-gray-50 border border-gray-200">
+                    <div class="relative w-12 h-12 flex items-center justify-center">
+                        <div class="absolute inset-0 border-2 border-black animate-ping opacity-25"></div>
+                        <div class="absolute inset-0 border-2 border-[#990000] animate-spin border-t-transparent"></div>
+                        <span class="w-3 h-3 bg-[#990000]"></span>
+                    </div>
+                    <div class="text-center font-telemetry">
+                        <span class="text-xs font-bold uppercase tracking-widest text-black block">SYNCHRONIZÁCIA TELEMETRIE</span>
+                        <span class="text-[10px] text-gray-500 uppercase tracking-wider block mt-1">SŤAHUJEM SPRAVODAJSKÉ DEPEŠE...</span>
+                    </div>
+                    <div class="w-36 h-1 bg-gray-200 overflow-hidden relative">
+                        <div class="absolute inset-y-0 left-0 bg-[#990000] w-1/3 animate-pulse"></div>
+                    </div>
+                </div>
+            `;
+            if (wordsHeader) wordsHeader.innerHTML = '<span class="text-[10px] font-telemetry uppercase text-gray-400 font-bold animate-pulse">● SKENUJEM ALARMY...</span>';
+
+            try {
+                // Vždy načítame čerstvé systémové alarmy z DB pre zobrazenie v radare
+                const alertsPromise = fetch('/api/alerts').then(r => r.json()).catch(() => []);
+
+                let activeQuery = globeQuery || '';
+                if (radarActiveFilterWords && radarActiveFilterWords.size > 0) {
+                    activeQuery = getSearchQueryForActiveWords();
+                }
+                let url = `/api/articles?period=${globePeriod}&limit=70&alerts_only=true`;
+                if (iso) url += `&country=${iso}`;
+                if (activeQuery) url += `&query=${encodeURIComponent(activeQuery)}`;
+                
+                let hitsUrl = `/api/alert-hits?limit=50`;
+                if (iso) hitsUrl += `&country=${iso}`;
+
+                const [res, hitsRes, freshAlerts] = await Promise.all([
+                    fetch(url),
+                    fetch(hitsUrl),
+                    alertsPromise
+                ]);
+                if (freshAlerts && freshAlerts.length > 0) {
+                    cachedSystemAlerts = freshAlerts;
+                }
+                const articles = await res.json();
+                const alertHits = await hitsRes.json();
+
+                if (!iso) {
+                    if (count) {
+                        currentCountryTotalCount = count;
+                    } else {
+                        try {
+                            const statsRes = await fetch(`/api/stats?period=${globePeriod}`);
+                            const statsData = await statsRes.json();
+                            if (statsData && statsData.total_alarm_hits !== undefined) {
+                                currentCountryTotalCount = statsData.total_alarm_hits;
+                            } else {
+                                currentCountryTotalCount = articles.length;
+                            }
+                        } catch(e) {
+                            currentCountryTotalCount = articles.length;
+                        }
+                    }
+                    if (countEl) countEl.innerText = `${currentCountryTotalCount} DEPEŠÍ`;
+                } else {
+                    currentCountryTotalCount = count || articles.length;
+                    if (countEl) countEl.innerText = `${currentCountryTotalCount} DEPEŠÍ`;
+                }
+
+            if (articles.length === 0) {
+                currentGlobeCountryArticles = [];
+                container.innerHTML = '<div class="text-center py-12 text-gray-500 text-xs">Žiadne články.</div>';
+                wordsHeader.innerHTML = '';
+                return;
+            }
+
+                // Spáruj alert hits s článkami aj v prípade, ak v matched_alerts niektoré chýbajú
+                const hitMap = new Map();
+                if (Array.isArray(alertHits)) {
+                    alertHits.forEach(h => {
+                        if (!hitMap.has(h.article_id)) hitMap.set(h.article_id, []);
+                        hitMap.get(h.article_id).push({
+                            alert_name: h.alert_name,
+                            matched_word: h.matched_text
+                        });
+                    });
+                }
+
+                articles.forEach(a => {
+                    if (!a.matched_alerts) a.matched_alerts = [];
+                    if (hitMap.has(a.id)) {
+                        const existingWords = new Set(a.matched_alerts.map(m => (m.matched_word || '').toLowerCase()));
+                        hitMap.get(a.id).forEach(h => {
+                            if (!existingWords.has((h.matched_word || '').toLowerCase())) {
+                                a.matched_alerts.push(h);
+                                existingWords.add((h.matched_word || '').toLowerCase());
+                            }
+                        });
+                    }
+                });
+
+                currentGlobeCountryArticles = articles;
+                renderRadarActiveWords();
+                renderFilteredGlobeArticles();
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div class="text-center py-12 text-red-500 text-xs">Chyba načítania.</div>';
+            }
+        }
+
+        function setGlobePeriod(p) {
+            globePeriod = p;
+            ['1h', '6h', '24h', 'all'].forEach(k => {
+                const el = document.getElementById(`gp-${k}`);
+                if (el) {
+                    el.classList.remove('bg-[#990000]', 'text-white', 'font-bold');
+                    el.classList.add('text-gray-300');
+                }
+            });
+            const activeEl = document.getElementById(`gp-${p}`);
+            if (activeEl) {
+                activeEl.classList.add('bg-[#990000]', 'text-white', 'font-bold');
+                activeEl.classList.remove('text-gray-300');
+            }
+            // Aktualizujeme 3D glóbus aj pravý stĺpec článkov pre nové časové okno
+            initOrUpdateGlobe();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
+        }
+
+        function applyGlobeKeyword() {
+            const val = document.getElementById('globe-keyword-input').value.trim();
+            if (!val) return;
+            globeQuery = val;
+            const badge = document.getElementById('globe-active-word-badge');
+            badge.classList.remove('hidden');
+            document.getElementById('globe-active-word-text').innerText = val;
+            initOrUpdateGlobe();
+        }
+
+        function clearGlobeKeyword() {
+            globeQuery = '';
+            document.getElementById('globe-keyword-input').value = '';
+            document.getElementById('globe-active-word-badge').classList.add('hidden');
+            initOrUpdateGlobe();
+        }
+
+        function resetFilters() {
+            currentCountry = '';
+            currentPeriod = '24h';
+            currentQuery = '';
+            document.getElementById('keyword-input').value = '';
+            document.getElementById('keyword-result').classList.add('hidden');
+            document.querySelectorAll('.time-pill').forEach(el => el.classList.remove('active'));
+            const p24 = document.getElementById('p-24h');
+            if (p24) p24.classList.add('active');
+            updateBadge();
+            loadCountries();
+            loadStats();
+            loadArticles('', '');
+        }
+
+        function refreshData() {
+            loadStats();
+            loadCountries();
+            loadArticles(currentCountry, currentQuery);
+            loadAlertsOverview();
+        }
+
+        // Init
+        refreshData();
+    
+        let allFavoritesList = [];
+
+        function updateModalFavButton(isFav) {
+            const btn = document.getElementById('modal-fav-btn');
+            const icon = document.getElementById('modal-fav-icon');
+            const text = document.getElementById('modal-fav-text');
+            if (!btn) return;
+            if (isFav) {
+                btn.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border bg-[#990000] border-white/20 text-white hover:bg-[#990000]';
+                icon.innerText = '★';
+                text.innerText = 'Uložené v knižnici';
+            } else {
+                btn.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border bg-gray-900 border-gray-700 text-gray-300 hover:text-white hover:border-white/20';
+                icon.innerText = '☆';
+                text.innerText = 'Uložiť do knižnice';
+            }
+        }
+
+        async function toggleModalFavorite() {
+            if (!currentArticleData) return;
+            const aid = currentArticleData.id;
+            const willBeFav = !currentArticleData.is_favorite;
+            try {
+                if (willBeFav) {
+                    await fetch('/api/favorites', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ article_id: aid })
+                    });
+                } else {
+                    await fetch(`/api/favorites/${aid}`, { method: 'DELETE' });
+                }
+                currentArticleData.is_favorite = willBeFav ? 1 : 0;
+                updateModalFavButton(currentArticleData.is_favorite);
+                loadStats();
+                const favView = document.getElementById('view-favorites');
+                if (favView && !favView.classList.contains('hidden')) {
+                    loadFavorites();
+                }
+            } catch (err) {
+                console.error('Error toggling favorite from modal:', err);
+            }
+        }
+
+        async function toggleCardFavorite(aid, btnEl) {
+            const isCurrentlyFav = btnEl.innerText.trim() === '★';
+            const willBeFav = !isCurrentlyFav;
+            try {
+                if (willBeFav) {
+                    await fetch('/api/favorites', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ article_id: aid })
+                    });
+                    btnEl.innerText = '★';
+                    btnEl.className = 'p-1 rounded hover:bg-gray-800 transition text-white';
+                    btnEl.title = 'Odstrániť z knižnice';
+                } else {
+                    await fetch(`/api/favorites/${aid}`, { method: 'DELETE' });
+                    btnEl.innerText = '☆';
+                    btnEl.className = 'p-1 rounded hover:bg-gray-800 transition text-gray-500 hover:text-white';
+                    btnEl.title = 'Uložiť do knižnice';
+                }
+                loadStats();
+                const favView = document.getElementById('view-favorites');
+                if (favView && !favView.classList.contains('hidden')) {
+                    loadFavorites();
+                }
+            } catch (err) {
+                console.error('Error toggling card favorite:', err);
+            }
+        }
+
+        async function loadFavorites() {
+            const container = document.getElementById('favorites-container');
+            const badge = document.getElementById('favorites-total-badge');
+            if (!container) return;
+            container.innerHTML = '<div class="col-span-2 text-center py-16 text-gray-500 text-xs flex items-center justify-center gap-2"><span class="w-4 h-4 border-2 border-white/20 border-t-transparent rounded-full animate-spin"></span> Načítavam knižnicu...</div>';
+
+            try {
+                const res = await fetch('/api/favorites?limit=200');
+                allFavoritesList = await res.json();
+                if (badge) badge.innerText = `${allFavoritesList.length} uložených`;
+                renderFavoritesCards(allFavoritesList);
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div class="col-span-2 text-center py-12 text-red-400 text-xs">Chyba načítania knižnice.</div>';
+            }
+        }
+
+        function filterFavoritesList() {
+            const query = (document.getElementById('favorites-search')?.value || '').toLowerCase().trim();
+            if (!query) {
+                renderFavoritesCards(allFavoritesList);
+                return;
+            }
+            const filtered = allFavoritesList.filter(a => {
+                return (a.title_sk && a.title_sk.toLowerCase().includes(query)) ||
+                       (a.title_orig && a.title_orig.toLowerCase().includes(query)) ||
+                       (a.title_en && a.title_en.toLowerCase().includes(query)) ||
+                       (a.media_name && a.media_name.toLowerCase().includes(query)) ||
+                       (a.country_name && a.country_name.toLowerCase().includes(query)) ||
+                       (a.perex_orig && a.perex_orig.toLowerCase().includes(query));
+            });
+            renderFavoritesCards(filtered);
+        }
+
+        function renderFavoritesCards(articles) {
+            const container = document.getElementById('favorites-container');
+            if (!container) return;
+            if (articles.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-16 text-gray-500 text-xs bg-gray-950/40 rounded-xl border border-gray-800/60 p-8">
+                        <div class="text-3xl mb-2">⭐</div>
+                        <div class="text-sm font-semibold text-gray-300 mb-1">Žiadne články v knižnici</div>
+                        <div>Označte zaujímavé články hviezdičkou v živom toku alebo priamo v detaile správy.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            articles.forEach(a => {
+                const dateObj = new Date(a.saved_at || a.published_at || a.scraped_at);
+                const timeStr = dateObj.toLocaleDateString([], {day:'2-digit', month:'2-digit'}) + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                html += `
+                    <div onclick="openArticleModal(${a.id})" class="glass-panel p-4 rounded-xl hover:border-white/20/60 hover:bg-gray-900/90 transition cursor-pointer relative group">
+                        <div class="flex items-center justify-between text-xs text-gray-400 mb-1.5">
+                            <span class="font-medium text-white flex items-center gap-1.5">
+                                ${(a.url && a.url.includes('t.me')) || (a.media_name && a.media_name.includes('TG')) ? '<span class="px-1 py-0.2 bg-[#990000] text-white border border-[#990000] rounded text-[9px] font-bold">✈️ TG</span>' : ''}
+                                <span>${a.media_name} · ${a.country_name}</span>
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="event.stopPropagation(); removeFavoriteItem(${a.id})" class="text-white hover:text-red-400 p-1 rounded transition text-sm" title="Odstrániť z knižnice">
+                                    ★
+                                </button>
+                                <span class="text-[11px] text-gray-500">${timeStr}</span>
+                            </div>
+                        </div>
+
+                        <!-- Titulok v slovenčine / originál -->
+                        <div class="text-sm font-semibold text-white mb-2 leading-snug">
+                            ${a.title_sk || a.title_orig}
+                        </div>
+
+                        ${a.title_sk && a.title_sk !== a.title_orig ? `
+                            <div class="text-xs text-gray-400 line-clamp-1 italic mb-2">
+                                Orig: ${a.title_orig}
+                            </div>
+                        ` : ''}
+
+                        ${a.perex_orig ? `<p class="text-xs text-gray-400 line-clamp-2 mb-2">${a.perex_orig}</p>` : ''}
+
+                        <div class="mt-2.5 flex items-center justify-between text-[11px] text-gray-500 border-t border-gray-800/80 pt-2">
+                            <span class="text-white/90 font-medium">📄 Plný slovenský prepis</span>
+                            <span class="text-gray-400 group-hover:text-white transition">Čítať →</span>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function removeFavoriteItem(aid) {
+            try {
+                await fetch(`/api/favorites/${aid}`, { method: 'DELETE' });
+                allFavoritesList = allFavoritesList.filter(a => a.id !== aid);
+                const badge = document.getElementById('favorites-total-badge');
+                if (badge) badge.innerText = `${allFavoritesList.length} uložených`;
+                filterFavoritesList();
+                loadStats();
+            } catch (err) {
+                console.error('Error removing favorite:', err);
+            }
+        }
+
+        function exportFavoritesCSV() {
+            if (!allFavoritesList || allFavoritesList.length === 0) {
+                alert('V knižnici sa nenachádzajú žiadne články na export.');
+                return;
+            }
+            let csv = 'ID,Médiá,Krajina,Titulok_SK,Titulok_Orig,URL,Uložené\n';
+            allFavoritesList.forEach(a => {
+                const clean = (str) => '"' + (str || '').replace(/"/g, '""').replace(/\n/g, ' ') + '"';
+                csv += `${a.id},${clean(a.media_name)},${clean(a.country_name)},${clean(a.title_sk)},${clean(a.title_orig)},${clean(a.url)},${clean(a.saved_at)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `spravodajsky_tep_kniznica_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+    </script>
+</body>
+</html>
