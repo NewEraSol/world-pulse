@@ -255,17 +255,26 @@
             </div>
         </div>
 
-        <!-- Pravý stĺpec: RADAR NAJNOVŠÍCH VÝSTRAH -->
+        <!-- Pravý stĺpec: RADAR POSLEDNÝCH ZÁSAHOV (World Pulse / Esquire Intel štýl) -->
         <div class="lg:col-span-1 space-y-5">
-            <div class="glass-panel p-4 rounded-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-red-400 flex items-center gap-1.5">
-                        <span>🚨 Radar Posledných Zásahov</span>
-                    </h3>
-                    <button onclick="switchView('alerts')" class="text-[11px] text-gray-400 hover:text-white underline">Spravovať</button>
+            <div class="bg-[#050608] border border-white/15 p-4 shadow-xl">
+                <!-- Hlavička radaru -->
+                <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 bg-[#990000] animate-ping"></span>
+                        <div>
+                            <span class="text-[9px] font-telemetry uppercase tracking-widest text-[#990000] font-bold block">LIVE RADAR FEED</span>
+                            <h3 class="text-xs font-headline uppercase tracking-wider text-white font-bold">RADAR POSLEDNÝCH ZÁSAHOV</h3>
+                        </div>
+                    </div>
+                    <button onclick="switchView('alerts')" class="text-[10px] font-telemetry text-gray-400 hover:text-white uppercase font-bold px-2 py-1 bg-white/5 hover:bg-[#990000] border border-white/10 transition">
+                        SPRAVOVAŤ
+                    </button>
                 </div>
-                <div class="space-y-2.5 overflow-y-auto max-h-[500px] pr-1" id="alarm-hits-container">
-                    <div class="text-xs text-gray-500">Žiadne nové alarmy.</div>
+
+                <!-- Kontajner zásahov -->
+                <div class="space-y-2.5 overflow-y-auto max-h-[720px] pr-1 scrollbar-none" id="alarm-hits-container">
+                    <div class="text-xs font-telemetry text-gray-500 py-6 text-center">Inicializujem radar...</div>
                 </div>
             </div>
         </div>
@@ -1370,18 +1379,33 @@
                 } else {
                     let hitsHtml = '';
                     hits.forEach(h => {
+                        const hitTime = h.triggered_at ? formatTelemetryDate(h.triggered_at) : (h.published_at ? formatTelemetryDate(h.published_at) : '');
                         hitsHtml += `
-                            <div onclick="openArticleModal(${h.article_id})" class="p-2.5 rounded-lg bg-red-950/40 border border-red-900/60 text-xs hover:border-red-500 cursor-pointer transition">
-                                <div class="font-semibold text-red-400 flex justify-between">
-                                    <span>${h.alert_name}</span>
-                                    <span class="text-gray-400">${h.country_name}</span>
+                            <div onclick="openArticleModal(${h.article_id})" class="p-3 bg-[#0d0e12] border-l-4 border-l-[#990000] border border-white/10 hover:border-white/30 hover:bg-[#14161c] cursor-pointer transition group shadow-sm">
+                                <!-- Horný riadok: Alarm badge + Médium/Krajina + Čas -->
+                                <div class="flex items-center justify-between text-[10px] font-telemetry mb-1.5 gap-1">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="px-1.5 py-0.2 bg-[#990000] text-white font-bold uppercase tracking-wider text-[9px]">
+                                            ${h.alert_name}
+                                        </span>
+                                        ${h.matched_text ? `<span class="bg-black text-white px-1 text-[9px] font-mono border border-white/20">${h.matched_text}</span>` : ''}
+                                    </div>
+                                    <span class="text-gray-400 text-[10px] font-mono shrink-0">${hitTime}</span>
                                 </div>
-                                <div class="text-gray-200 mt-1 block font-medium">
+
+                                <!-- Originálny titulok v ostrých hranách -->
+                                <div class="text-xs font-semibold text-white leading-snug group-hover:text-red-300 transition line-clamp-2 mb-1.5">
                                     ${h.title_orig}
                                 </div>
-                                <div class="text-[10px] text-gray-500 mt-1 flex justify-between">
-                                    <span>${h.media_name}</span>
-                                    <span class="text-white">Otvoriť prepis →</span>
+
+                                <!-- Pätička karty: Médium a Krajina -->
+                                <div class="flex items-center justify-between text-[10px] font-telemetry text-gray-400 pt-1 border-t border-white/5">
+                                    <span class="truncate max-w-[140px] text-gray-300 font-medium">
+                                        ${h.media_name} ${h.country_iso ? `(${h.country_iso})` : ''}
+                                    </span>
+                                    <span class="text-[#990000] font-bold group-hover:translate-x-0.5 transition uppercase text-[9.5px]">
+                                        DEPEŠA →
+                                    </span>
                                 </div>
                             </div>
                         `;
