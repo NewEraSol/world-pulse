@@ -609,7 +609,7 @@
                 
                 <!-- Hlavička Intelligence Column (Biely štýl) -->
                 <div class="border-b border-gray-200 pb-3">
-                    <div class="flex justify-between items-start">
+                    <div class="flex justify-between items-start mb-2">
                         <div>
                             <span class="text-[11px] font-headline uppercase font-bold tracking-widest text-[#990000] block mb-1">
                                 INTELLIGENCE COLUMN
@@ -621,33 +621,53 @@
                                 RADAROVÉ ZÁSAHY & SLEDOVANÉ ALARMY
                             </span>
                         </div>
-                        <div class="flex flex-col items-end gap-1.5">
+                        <div class="flex items-center">
                             <span id="globe-selected-count" class="text-xs bg-black text-white px-3 py-1 font-telemetry font-bold shadow-sm shrink-0">
-                                0 SPRÁV
+                                0 DEPEŠÍ
                             </span>
-                            <div class="relative">
-                                <button onclick="toggleCountriesDropdown()" id="btn-show-all-countries" class="text-[10px] font-telemetry text-white bg-black hover:bg-[#990000] border border-black px-2.5 py-1 transition uppercase font-bold flex items-center gap-1 shadow-sm">
-                                    <span id="btn-country-filter-label">🌍 VŠETKY KRAJINY</span>
-                                    <span id="country-dropdown-arrow">▼</span>
-                                </button>
-                            </div>
                         </div>
                     </div>
 
-                    <!-- Panel kľúčových slov: Tlačidlo na otvorenie popup okna a zrušenie výberu -->
-                    <div class="mt-3 pt-3 border-t border-gray-200 flex flex-wrap items-center justify-between gap-2">
+                    <!-- Tlačidlá filtrov VEDĽA SEBA: RADAR ALARMY + VŠETKY KRAJINY + ZRUŠIŤ -->
+                    <div class="mt-3 pt-3 border-t border-gray-200 flex flex-wrap items-center gap-2">
+                        <!-- Tlačidlo 1: RADAR ALARMY -->
                         <button onclick="openRadarWordsModal()" class="px-3 py-1.5 bg-black hover:bg-[#990000] text-white text-[11px] font-telemetry font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-sm border border-black">
                             <span>🎯</span>
                             <span>RADAR ALARMY</span>
                             <span id="btn-words-count-badge" class="bg-[#990000] text-white px-1.5 py-0.2 text-[9px] font-bold">VŠETKY</span>
                         </button>
-                        
-                        <div class="flex items-center gap-2">
-                            <button onclick="clearRadarFilter()" id="btn-clear-all-words" class="px-2.5 py-1.5 bg-gray-100 hover:bg-[#990000] text-gray-700 hover:text-white text-[11px] font-telemetry font-bold border border-gray-300 transition uppercase flex items-center gap-1" title="Zrušiť výber a zobraziť všetky správy a slová">
-                                <span>✕</span> ZRUŠIŤ VÝBER (VŠETKO)
+
+                        <!-- Tlačidlo 2: VŠETKY KRAJINY (otvára výber krajín) -->
+                        <div class="relative">
+                            <button onclick="toggleCountriesDropdown()" id="btn-show-all-countries" class="px-3 py-1.5 bg-black hover:bg-[#990000] text-white text-[11px] font-telemetry font-bold uppercase tracking-wider flex items-center gap-1.5 transition shadow-sm border border-black">
+                                <span id="btn-country-filter-label">🌍 VŠETKY KRAJINY</span>
+                                <span id="country-dropdown-arrow">▼</span>
                             </button>
                         </div>
+
+                        <!-- Tlačidlo 3: ZRUŠIŤ FILTER (zobrazuje sa keď je niečo aktívne) -->
+                        <button onclick="clearRadarFilter()" id="btn-clear-all-words" class="px-2.5 py-1.5 bg-gray-100 hover:bg-[#990000] text-gray-700 hover:text-white text-[11px] font-telemetry font-bold border border-gray-300 transition uppercase flex items-center gap-1 ml-auto" title="Zrušiť filter">
+                            <span>✕</span> ZRUŠIŤ FILTER
+                        </button>
                     </div>
+
+                    <!-- Rozklikávacie okno výberu krajiny (umiestnené priamo pod tlačidlami) -->
+                    <div id="globe-countries-wrapper" class="hidden mt-2 p-3 bg-gray-50 border-2 border-black transition shadow-lg">
+                        <div class="flex justify-between items-center mb-2 pb-1 border-b border-gray-300">
+                            <span class="text-[10.5px] font-headline uppercase font-bold text-black tracking-wider flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-[#990000] animate-pulse"></span>
+                                NAJSILNEJŠIE RADAROVÉ ZÁSAHY KRAJÍN (KLIKNUTÍM ZVOLÍŠ KRAJINU):
+                            </span>
+                            <button onclick="selectGlobeCountry('', 'Všetky krajiny sveta', 0)" class="text-[10px] font-telemetry text-[#990000] hover:underline uppercase font-bold">
+                                ✕ Zobraziť všetky
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 max-h-56 overflow-y-auto pr-1" id="globe-top-countries-pills">
+                            <!-- Naplní JS -->
+                        </div>
+                    </div>
+
+                    <!-- Zobrazenie len aktívne vybraných slov/alarmov -->
                     <div id="radar-active-preview-chips" class="flex flex-wrap items-center gap-1 mt-2 min-h-[10px]"></div>
                 </div>
 
@@ -667,36 +687,7 @@
                     </div>
                 </div>
 
-                <!-- Rýchle prepínače top pulzujúcich krajín -->
-                <div class="border-t border-gray-200 pt-3 bg-white">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-[11px] font-headline uppercase text-black font-bold flex items-center gap-1.5 tracking-wider">
-                            <span class="w-2 h-2 rounded-full bg-[#990000] animate-pulse"></span>
-                            <span>NAJSILNEJŠIE RADAROVÉ ZÁSAHY</span>
-                        </span>
-                        <!-- Mobilné tlačidlo pre otvorenie výberu krajiny -->
-                        <button onclick="toggleMobileCountryDropdown()" class="md:hidden px-2.5 py-1 bg-black text-white text-[10px] font-telemetry font-bold uppercase tracking-wider flex items-center gap-1 border border-black">
-                            <span>📍 VYBRAŤ KRAJINU</span>
-                            <span id="mobile-country-dropdown-arrow">▼</span>
-                        </button>
-                    </div>
 
-                    <!-- Rozklikávací kontajner pre výber krajiny zo zásahov (otvára sa klikom na tlačidlo) -->
-                    <div id="globe-countries-wrapper" class="hidden mt-2 p-3 bg-gray-50 border-2 border-black transition shadow-md">
-                        <div class="flex justify-between items-center mb-2 pb-1 border-b border-gray-200">
-                            <span class="text-[10px] font-headline uppercase font-bold text-black tracking-wider flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 rounded-full bg-[#990000]"></span>
-                                NAJSILNEJŠIE RADAROVÉ ZÁSAHY KRAJÍN:
-                            </span>
-                            <button onclick="selectGlobeCountry('', 'Všetky krajiny sveta', 0)" class="text-[9.5px] font-telemetry text-[#990000] hover:underline uppercase font-bold">
-                                Zrušiť (Všetky)
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1" id="globe-top-countries-pills">
-                            <!-- Naplní JS -->
-                        </div>
-                    </div>
-                </div>
             </div>
 
         </div>
@@ -3356,7 +3347,11 @@
             if (label) {
                 label.innerText = iso ? `📍 ${name} (${iso})` : '🌍 VŠETKY KRAJINY';
             }
-            toggleCountriesDropdown();
+            const wrapper = document.getElementById('globe-countries-wrapper');
+            const arrow = document.getElementById('country-dropdown-arrow');
+            if (wrapper) wrapper.classList.add('hidden');
+            if (arrow) arrow.innerText = '▼';
+
             loadGlobeCountryArticles(iso, name, count);
         }
 
