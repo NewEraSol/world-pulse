@@ -264,6 +264,11 @@
                 </div>
 
                 <div class="flex items-center gap-1.5 shrink-0">
+                    <!-- Rýchly skok na Radar posledných zásahov -->
+                    <button onclick="scrollToRadarHits()" class="px-2.5 py-1 bg-black hover:bg-[#990000] text-white border border-[#990000] text-[10px] font-telemetry font-bold transition uppercase flex items-center gap-1 shadow-sm" title="Rýchly skok na Radar Posledných Zásahov">
+                        <span class="w-2 h-2 rounded-full bg-[#990000] animate-pulse"></span>
+                        <span>RADAR</span>
+                    </button>
                     <button onclick="resetFilters()" class="px-2 py-1 bg-[#990000] hover:bg-[#b30000] text-white text-[10px] font-telemetry font-bold transition uppercase flex items-center gap-1" title="Vynulovať filtre">
                         <span>✕</span> <span class="hidden sm:inline">Zrušiť</span>
                     </button>
@@ -290,7 +295,7 @@
         </div>
 
         <!-- Pravý stĺpec: RADAR POSLEDNÝCH ZÁSAHOV (World Pulse / Esquire Intel štýl) -->
-        <div class="lg:col-span-1 space-y-5">
+        <div id="radar-hits-section" class="lg:col-span-1 space-y-5 scroll-mt-32">
             <div class="bg-[#050608] border border-white/15 p-4 shadow-xl">
                 <!-- Hlavička radaru -->
                 <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
@@ -744,6 +749,14 @@
         </div>
     </div>
 
+    <!-- FLOATING ACTION BUTTON PRE MOBIL: RÝCHLY RADAR -->
+    <div id="mobile-radar-fab" class="fixed bottom-5 right-5 z-40 lg:hidden">
+        <button onclick="scrollToRadarHits()" class="bg-[#0a0b0e] hover:bg-[#990000] text-white border-2 border-[#990000] p-3 shadow-2xl flex items-center gap-2 font-telemetry font-bold text-xs uppercase tracking-wider transition transform active:scale-95" title="Prejsť na Radar Posledných Zásahov">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#990000] animate-ping"></span>
+            <span>🚨 RADAR</span>
+        </button>
+    </div>
+
     <!-- MODAL DIALÓG: ADMIN PIN OVERENIE -->
     <div id="admin-pin-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-white text-black border-2 border-black w-full max-w-sm p-6 shadow-2xl relative">
@@ -949,6 +962,20 @@
         // ================= MOBILNÉ SKRÝVANIE PRI SCROLLOVANÍ (SMART HEADER & FILTERS) =================
         
         // ================= POPUP FILTER PANEL (MOBIL + DESKTOP) =================
+        
+        function scrollToRadarHits() {
+            // Ak nie sme v zobrazení feedu, najprv prepneme na feed
+            if (typeof switchView === 'function') {
+                switchView('feed');
+            }
+            setTimeout(() => {
+                const target = document.getElementById('radar-hits-section');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        }
+
         function openMobileFilterModal() {
             const m = document.getElementById('mobile-filter-modal');
             if (!m) return;
