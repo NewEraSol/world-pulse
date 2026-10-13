@@ -1416,7 +1416,7 @@
             });
 
             // Nastavenie cerveneho stavu VÝLUČNE pre aktualne otvorenu podstranku
-            const activeTabMap = { feed: tabFeed, alerts: tabAlerts, sources: tabSources, globe: tabGlobe, favorites: tabFav };
+            const activeTabMap = { feed: tabFeed, alerts: tabAlerts, sources: tabSources, globe: tabGlobe, favorites: tabFav, community: tabCom };
             const currentTab = activeTabMap[view];
             if (currentTab) {
                 currentTab.classList.remove('text-black');
@@ -1446,10 +1446,6 @@
                 loadFavorites();
             } else if (view === 'community') {
                 if (comView) { comView.classList.remove('hidden'); comView.classList.add('flex'); }
-                if (tabCom) {
-                    tabCom.classList.remove('text-black');
-                    tabCom.classList.add('bg-black', 'text-white', 'font-bold', 'border-t-2', 'border-[#990000]');
-                }
                 loadCommunityData();
             }
         }
@@ -2496,8 +2492,14 @@
             loadGlobeRadarAlerts();
             try {
                 fetch('/api/alerts').then(r => r.json()).then(al => { cachedSystemAlerts = al; renderRadarActiveWords(); }).catch(() => {});
-                let url = `/api/countries?period=${globePeriod}&alerts_only=true`;
-                if (globeQuery) url += `&query=${encodeURIComponent(globeQuery)}`;
+                let url = `/api/countries?period=${globePeriod}`;
+                if (activeGlobeAlertId) {
+                    url += `&alert_id=${encodeURIComponent(activeGlobeAlertId)}`;
+                } else if (globeQuery) {
+                    url += `&query=${encodeURIComponent(globeQuery)}`;
+                } else {
+                    url += `&alerts_only=true`;
+                }
                 const res = await fetch(url);
                 const countries = await res.json();
 

@@ -108,6 +108,7 @@ def get_stats(period: Optional[str] = "all"):
 def get_countries(
     period: Optional[str] = "all",
     query: Optional[str] = None,
+    alert_id: Optional[int] = None,
     alerts_only: bool = False
 ):
     conn = get_db()
