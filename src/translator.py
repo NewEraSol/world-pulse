@@ -53,7 +53,7 @@ def translate_chunks(text: str, target_lang: str) -> str:
     return "\n\n".join(translated_paras)
 
 def get_or_translate_article(article_id: int):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 

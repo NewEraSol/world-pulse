@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from collector import collect_all
 
 def main():
-    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] RSS Daemon na Hetzneri spustený (cyklus 15 minút)...")
+    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] RSS Daemon na Hetzneri spustený (cyklus 2 minúty)...")
     while True:
         try:
             print(f"\n--- [{datetime.datetime.now().strftime('%H:%M:%S')}] Spúšťam zber najnovších správ ---")
@@ -20,7 +20,7 @@ def main():
             print("Chyba v cykle zberu:", e)
         
         # Pockaj 15 minut (900 sekund)
-        time.sleep(900)
+        time.sleep(120)
 
 if __name__ == '__main__':
     main()

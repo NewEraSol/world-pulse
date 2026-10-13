@@ -3,7 +3,7 @@ FastAPI Server pre Spravodajsky Tep Sveta.
 Zahŕňa multilingválnu expanziu dotazov (hľadanie v natívnych jazykoch sveta)
 a kompletný preklad prepisov do SK a EN.
 """
-from fastapi import FastAPI, Query, HTTPException, Body
+from fastapi import FastAPI, Query, HTTPException, Body, Header
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -21,6 +21,13 @@ from geo_data import COUNTRY_COORDINATES
 
 app = FastAPI(title="Spravodajský Tep Sveta", version="1.3")
 
+ADMIN_PIN = os.getenv("TEP_ADMIN_PIN", "3690")
+
+def verify_admin_pin(x_admin_pin: Optional[str] = Header(None)):
+    if not x_admin_pin or x_admin_pin != ADMIN_PIN:
+        raise HTTPException(status_code=403, detail="Prístup zamietnutý. Neplatný Admin PIN.")
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,7 +39,7 @@ app.add_middleware(
 DB_PATH = '/root/spravodajsky_tep/data/tep_sveta.db'
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -273,29 +280,8 @@ def get_articles(
             if query:
                 r['searched_word'] = query
 
-    # Okamzity On-Demand preklad pre zobrazovanu stranku (zarucuje 100% prelozene titulky v GUI)
-    missing_indices = []
-    missing_texts = []
-    for idx, r in enumerate(rows):
-        if not r.get('title_en'):
-            missing_indices.append(idx)
-            missing_texts.append(r['title_orig'])
-
-    if missing_texts:
-        try:
-            from robust_translator import robust_batch_translate
-            trans_en = robust_batch_translate(missing_texts, 'en')
-            trans_sk = robust_batch_translate(missing_texts, 'sk')
-            for i, row_idx in enumerate(missing_indices):
-                t_en = trans_en[i] if i < len(trans_en) else missing_texts[i]
-                t_sk = trans_sk[i] if i < len(trans_sk) else missing_texts[i]
-                rows[row_idx]['title_en'] = t_en
-                if not rows[row_idx].get('title_sk'):
-                    rows[row_idx]['title_sk'] = t_sk
-                cur.execute("UPDATE articles SET title_en = ?, title_sk = COALESCE(title_sk, ?) WHERE id = ?", (t_en, t_sk, rows[row_idx]['id']))
-            conn.commit()
-        except Exception:
-            pass
+    # Preklad titulkov beží plne asynchrónne na pozadí cez proces tep-title-translator,
+    # takže API odpovedá okamžite bez akéhokoľvek zdržania (odozva < 100ms)
 
     conn.close()
     return rows
@@ -386,6 +372,16 @@ def get_keyword_frequency(
         "breakdown_by_country": by_country
     }
 
+
+class AdminVerifyRequest(BaseModel):
+    pin: str
+
+@app.post("/api/admin/verify")
+def verify_pin(payload: AdminVerifyRequest):
+    if payload.pin == ADMIN_PIN:
+        return {"status": "ok", "valid": True}
+    raise HTTPException(status_code=403, detail="Nesprávny PIN")
+
 # ----------------- ALARMY & VÝSTRAHY (CRUD) -----------------
 
 
@@ -452,7 +448,8 @@ def get_alerts():
     return alerts
 
 @app.post("/api/alerts")
-def create_alert(payload: AlertCreate):
+def create_alert(payload: AlertCreate, x_admin_pin: Optional[str] = Header(None)):
+    verify_admin_pin(x_admin_pin)
     name = payload.name.strip()
     pattern = payload.query_pattern.strip()
     if not name or not pattern:
@@ -498,7 +495,8 @@ def create_alert(payload: AlertCreate):
     return {"status": "ok", "alert_id": alert_id, "query_pattern": pattern, "retro_hits": retro_hits}
 
 @app.delete("/api/alerts/{alert_id}")
-def delete_alert(alert_id: int):
+def delete_alert(alert_id: int, x_admin_pin: Optional[str] = Header(None)):
+    verify_admin_pin(x_admin_pin)
     conn = get_db()
     cur = conn.cursor()
     cur.execute("DELETE FROM alert_hits WHERE alert_id = ?", (alert_id,))
@@ -580,7 +578,8 @@ def get_media(country: Optional[str] = None):
     return rows
 
 @app.post("/api/media")
-def create_media(payload: MediaCreate):
+def create_media(payload: MediaCreate, x_admin_pin: Optional[str] = Header(None)):
+    verify_admin_pin(x_admin_pin)
     name = payload.name.strip()
     web_url = payload.website_url.strip()
     rss_url = payload.rss_url.strip()
@@ -620,7 +619,8 @@ def create_media(payload: MediaCreate):
     return {"status": "ok", "media_id": media_id}
 
 @app.delete("/api/media/{media_id}")
-def delete_media(media_id: int):
+def delete_media(media_id: int, x_admin_pin: Optional[str] = Header(None)):
+    verify_admin_pin(x_admin_pin)
     conn = get_db()
     cur = conn.cursor()
     # Vymažeme prípadné články alebo označíme ako neaktívny

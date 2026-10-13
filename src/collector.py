@@ -11,6 +11,7 @@ import datetime
 import hashlib
 from bs4 import BeautifulSoup
 from typing import List, Dict, Any
+from robust_translator import robust_translate, is_substantially_different
 
 DB_PATH = '/root/spravodajsky_tep/data/tep_sveta.db'
 HEADERS = {
@@ -52,7 +53,7 @@ async def fetch_source(session: aiohttp.ClientSession, media: Dict[str, Any]) ->
         return media, None
 
 def get_active_media() -> List[Dict[str, Any]]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     cur.execute("SELECT id, country_iso, name, rss_url, category FROM media_outlets WHERE is_active = 1 AND rss_url IS NOT NULL")
@@ -61,7 +62,7 @@ def get_active_media() -> List[Dict[str, Any]]:
     return rows
 
 def get_active_alerts() -> List[Dict[str, Any]]:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     cur.execute("SELECT id, name, query_pattern FROM alerts WHERE is_active = 1")
@@ -79,7 +80,7 @@ async def collect_all():
         tasks = [fetch_source(session, m) for m in media_list]
         results = await asyncio.gather(*tasks)
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     cur = conn.cursor()
 
     new_articles_count = 0
@@ -180,11 +181,30 @@ async def collect_all():
                 if published and published > now_iso:
                     published = now_iso
 
+                # Okamžitý inline preklad nového titulku priamo pri zbere (nulové čakanie pre používateľa)
+                c_iso = media.get('country_iso', '')
+                t_sk = None
+                t_en = None
+                if c_iso in ['SK', 'CZ']:
+                    t_sk = title
+                elif c_iso in ['US', 'GB', 'CA', 'AU']:
+                    t_en = title
+                    try:
+                        t_sk = robust_translate(title, 'sk')
+                    except Exception:
+                        t_sk = None
+                else:
+                    try:
+                        t_sk = robust_translate(title, 'sk')
+                        t_en = robust_translate(title, 'en')
+                    except Exception:
+                        pass
+
                 try:
                     cur.execute("""
-                        INSERT INTO articles (media_id, country_iso, guid, url, title_orig, perex_orig, content_snippet, published_at, engagement_likes)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (media['id'], media['country_iso'], guid, link, title, perex, full_text, published, views))
+                        INSERT INTO articles (media_id, country_iso, guid, url, title_orig, title_sk, title_en, perex_orig, content_snippet, published_at, engagement_likes)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (media['id'], media['country_iso'], guid, link, title, t_sk, t_en, perex, full_text, published, views))
                     article_id = cur.lastrowid
                     new_articles_count += 1
 

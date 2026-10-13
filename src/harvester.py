@@ -19,7 +19,7 @@ USER_AGENTS = [
 ]
 
 def harvest_batch(limit=25):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=60.0)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
