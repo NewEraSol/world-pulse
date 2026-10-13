@@ -1,0 +1,46 @@
+"""
+Slovnik GPS suradnic (zemepisna sirka / dlzka) pre vsetkych 39 monitorovanych krajin sveta.
+Pouzite pre 3D Cobe Globe Pulse vizualizaciu.
+"""
+
+COUNTRY_COORDINATES = {
+    "SK": {"lat": 48.6690, "lon": 19.6990, "name": "Slovensko"},
+    "CZ": {"lat": 49.8175, "lon": 15.4730, "name": "Česká republika"},
+    "US": {"lat": 38.9072, "lon": -77.0369, "name": "USA"},
+    "GB": {"lat": 51.5074, "lon": -0.1278, "name": "Veľká Británia"},
+    "DE": {"lat": 52.5200, "lon": 13.4050, "name": "Nemecko"},
+    "FR": {"lat": 48.8566, "lon": 2.3522, "name": "Francúzsko"},
+    "CN": {"lat": 39.9042, "lon": 116.4074, "name": "Čína"},
+    "RU": {"lat": 55.7558, "lon": 37.6173, "name": "Rusko"},
+    "JP": {"lat": 35.6762, "lon": 139.6503, "name": "Japonsko"},
+    "SA": {"lat": 24.7136, "lon": 46.6753, "name": "Saudská Arábia"},
+    "IN": {"lat": 28.6139, "lon": 77.2090, "name": "India"},
+    "BR": {"lat": -15.7975, "lon": -47.8919, "name": "Brazília"},
+    "IL": {"lat": 31.7683, "lon": 35.2137, "name": "Izrael"},
+    "IR": {"lat": 35.6892, "lon": 51.3890, "name": "Irán"},
+    "PL": {"lat": 52.2297, "lon": 21.0122, "name": "Poľsko"},
+    "UA": {"lat": 50.4501, "lon": 30.5234, "name": "Ukrajina"},
+    "AU": {"lat": -35.2809, "lon": 149.1300, "name": "Austrália"},
+    "CA": {"lat": 45.4215, "lon": -75.6972, "name": "Kanada"},
+    "CH": {"lat": 46.9480, "lon": 7.4474, "name": "Švajčiarsko"},
+    "SG": {"lat": 1.3521, "lon": 103.8198, "name": "Singapur"},
+    "TR": {"lat": 39.9334, "lon": 32.8597, "name": "Turecko"},
+    "AE": {"lat": 24.4539, "lon": 54.3773, "name": "Spojené arabské emiráty"},
+    "KR": {"lat": 37.5665, "lon": 126.9780, "name": "Južná Kórea"},
+    "TW": {"lat": 25.0330, "lon": 121.5654, "name": "Taiwan"},
+    "IT": {"lat": 41.9028, "lon": 12.4964, "name": "Taliansko"},
+    "ES": {"lat": 40.4168, "lon": -3.7038, "name": "Španielsko"},
+    "NL": {"lat": 52.3676, "lon": 4.9041, "name": "Holandsko"},
+    "NO": {"lat": 59.9139, "lon": 10.7522, "name": "Nórsko"},
+    "SE": {"lat": 59.3293, "lon": 18.0686, "name": "Švédsko"},
+    "AT": {"lat": 48.2082, "lon": 16.3738, "name": "Rakúsko"},
+    "HU": {"lat": 47.4979, "lon": 19.0402, "name": "Maďarsko"},
+    "MX": {"lat": 19.4326, "lon": -99.1332, "name": "Mexiko"},
+    "AR": {"lat": -34.6037, "lon": -58.3816, "name": "Argentína"},
+    "ZA": {"lat": -25.7479, "lon": 28.2293, "name": "Južná Afrika"},
+    "ID": {"lat": -6.2088, "lon": 106.8456, "name": "Indonézia"},
+    "VN": {"lat": 21.0285, "lon": 105.8542, "name": "Vietnam"},
+    "EG": {"lat": 30.0444, "lon": 31.2357, "name": "Egypt"},
+    "GR": {"lat": 37.9838, "lon": 23.7275, "name": "Grécko"},
+    "QA": {"lat": 25.2854, "lon": 51.5310, "name": "Katar"}
+}

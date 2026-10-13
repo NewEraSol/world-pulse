@@ -1,0 +1,17 @@
+# Virtuálne prostredie
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Databázy a cache
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+*.bak*
+
+# Logy a dočasné súbory
+*.log
+/tmp/
+.DS_Store
