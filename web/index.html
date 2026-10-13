@@ -647,7 +647,7 @@
 
                         <!-- Tlačidlo 3: ZRUŠIŤ FILTER (zobrazuje sa keď je niečo aktívne) -->
                         <button onclick="clearRadarFilter()" id="btn-clear-all-words" class="px-2.5 py-1.5 bg-gray-100 hover:bg-[#990000] text-gray-700 hover:text-white text-[11px] font-telemetry font-bold border border-gray-300 transition uppercase flex items-center gap-1 ml-auto" title="Zrušiť filter">
-                            <span>✕</span> ZRUŠIŤ FILTER
+                            <span>✕</span> ZRUŠIŤ RADAR & KRAJINU
                         </button>
                     </div>
 
@@ -727,8 +727,8 @@
                     </div>
                 </div>
 
-                <!-- 2. HĽADANIE SLOVA (FREKVENCIA) -->
-                <div class="border border-white/10 p-3 bg-[#0d0e12]">
+                <!-- 2. HĽADANIE SLOVA (FREKVENCIA) - Dočasne schované -->
+                <div class="border border-white/10 p-3 bg-[#0d0e12] hidden">
                     <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-white/10">
                         <span class="text-[11px] font-headline uppercase tracking-wider text-[#990000] font-bold">🔍 FREKVENCIA SLOVA (TEP)</span>
                         <span class="text-[9px] bg-[#990000] text-white px-1.5 py-0.2 font-telemetry">AI SEARCH</span>
@@ -994,31 +994,32 @@
                     <h3 id="modal-title-orig" class="text-lg font-bold text-white mb-2 leading-snug"></h3>
                     <div id="modal-radar-hits" class="flex flex-wrap items-center gap-1.5 mb-2"></div>
                     
-                    <!-- Preklady Titulku -->
-                    <div class="space-y-1 text-xs">
-                        <div class="flex items-start gap-2 text-black bg-white p-2.5 border-l-4 border-black border-t border-b border-r border-gray-300 shadow-sm">
-                            <span class="font-bold text-[10px] uppercase bg-[#990000] px-1.5 py-0.5 text-white mt-0.5 font-telemetry">SK TITULOK</span>
-                            <span id="modal-title-sk" class="font-editorial text-sm font-bold text-black"></span>
+                    <!-- Preklady Titulku (Kompaktné tenšie zobrazenie šetriace priestor) -->
+                    <div class="space-y-1 text-xs mt-1.5">
+                        <div class="flex items-center gap-2 text-black bg-white/95 px-2.5 py-1 border-l-2 border-black border-t border-b border-r border-gray-200">
+                            <span class="font-bold text-[9px] uppercase bg-[#990000] px-1 py-0.2 text-white font-telemetry shrink-0">SK</span>
+                            <span id="modal-title-sk" class="font-editorial text-xs font-semibold text-black leading-snug"></span>
                         </div>
-                        <div class="flex items-start gap-2 text-white bg-[#990000] p-2.5 border border-[#990000] shadow-sm">
-                            <span class="font-bold text-[10px] uppercase bg-black px-1.5 py-0.5 text-white mt-0.5 font-telemetry">EN TITULOK</span>
-                            <span id="modal-title-en" class="font-editorial text-sm text-white"></span>
+                        <div class="flex items-center gap-2 text-white bg-[#990000]/90 px-2.5 py-1 border border-[#990000]">
+                            <span class="font-bold text-[9px] uppercase bg-black px-1 py-0.2 text-white font-telemetry shrink-0">EN</span>
+                            <span id="modal-title-en" class="font-editorial text-xs text-white/95 leading-snug"></span>
                         </div>
                     </div>
                 </div>
                 <button onclick="closeModal()" class="text-gray-400 hover:text-white p-2 rounded-lg bg-gray-900 border border-gray-700 text-lg leading-none">&times;</button>
             </div>
 
-            <!-- Prepínač Jazyka Pre Plný Text Článku -->
-            <div class="flex border-b border-gray-800 bg-gray-900/60 px-6 pt-2 text-xs">
-                <button onclick="switchModalLang('sk')" id="modal-lang-sk" class="modal-lang-tab px-4 py-2 rounded-t transition active">
-                    🇸🇰 Slovenský Prepis (Plný Text)
+            <!-- Prepínač Jazyka Pre Plný Text Článku (Kompaktný: iba symboly a skratky) -->
+            <div class="flex items-center gap-1.5 border-b border-gray-800 bg-black/60 px-5 py-1 text-xs">
+                <span class="text-[9.5px] font-telemetry text-gray-400 uppercase font-bold mr-1">JAZYK TEXTU:</span>
+                <button onclick="switchModalLang('sk')" id="modal-lang-sk" class="modal-lang-tab px-3 py-1 transition active flex items-center gap-1 text-[11px] font-bold font-telemetry">
+                    <span>🇸🇰</span> <span>SK</span>
                 </button>
-                <button onclick="switchModalLang('en')" id="modal-lang-en" class="modal-lang-tab px-4 py-2 rounded-t transition text-gray-400 hover:text-white">
-                    🇬🇧 English Full Text
+                <button onclick="switchModalLang('en')" id="modal-lang-en" class="modal-lang-tab px-3 py-1 transition text-gray-400 hover:text-white flex items-center gap-1 text-[11px] font-bold font-telemetry">
+                    <span>🇬🇧</span> <span>EN</span>
                 </button>
-                <button onclick="switchModalLang('orig')" id="modal-lang-orig" class="modal-lang-tab px-4 py-2 rounded-t transition text-gray-400 hover:text-white">
-                    🌐 Originálny Text
+                <button onclick="switchModalLang('orig')" id="modal-lang-orig" class="modal-lang-tab px-3 py-1 transition text-gray-400 hover:text-white flex items-center gap-1 text-[11px] font-bold font-telemetry">
+                    <span>🌐</span> <span>ORIG</span>
                 </button>
             </div>
 
@@ -2929,9 +2930,32 @@
         }
 
         function clearRadarFilter() {
+            // Kompletný reset: zruší alarm aj krajinu a vráti všetky krajiny a všetky alarmy
+            activeGlobeAlertId = '';
+            activeGlobeAlertPattern = '';
+            globeQuery = '';
             radarActiveFilterWords.clear();
+            toggleRadarWordInput(false);
+            
+            currentSelectedCountryIso = '';
+            currentSelectedCountryName = 'Všetky krajiny sveta';
+            currentCountryTotalCount = 0;
+            
+            const label = document.getElementById('btn-country-filter-label');
+            if (label) label.innerText = '🌍 VŠETKY KRAJINY';
+            const wrapper = document.getElementById('globe-countries-wrapper');
+            if (wrapper) wrapper.classList.add('hidden');
+            const arrow = document.getElementById('country-dropdown-arrow');
+            if (arrow) arrow.innerText = '▼';
+            
+            const badge = document.getElementById('globe-active-word-badge');
+            if (badge) badge.classList.add('hidden');
+            const btnBadge = document.getElementById('btn-words-count-badge');
+            if (btnBadge) { btnBadge.innerText = 'VŠETKY'; btnBadge.className = 'bg-black text-white px-1.5 py-0.2 text-[9px] font-bold'; }
+            
             renderRadarActiveWords();
-            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+            initOrUpdateGlobe();
+            loadGlobeCountryArticles('', 'Všetky krajiny sveta', 0);
         }
 
         // Zistenie kľúčového vyhľadávacieho dotazu pre viacero zvolených slov naraz
