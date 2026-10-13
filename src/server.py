@@ -180,6 +180,7 @@ def get_countries(
 def get_articles(
     country: Optional[str] = None,
     query: Optional[str] = None,
+    alert_id: Optional[int] = None,
     period: Optional[str] = "all",
     alerts_only: bool = False,
     limit: int = 50,
@@ -207,7 +208,31 @@ def get_articles(
             since = (now - delta_map[period]).isoformat()
             time_filter = " AND (a.published_at >= ? OR a.scraped_at >= ?)"
 
-    if query:
+    if alert_id:
+        # Bleskové vyhľadávanie priamo cez zachytené hity daného alarmu (<5ms odozva)
+        sql = f"""
+            SELECT a.id, a.country_iso, a.title_orig, a.title_sk, a.title_en, a.perex_orig, a.perex_sk, a.perex_en, 
+                   a.url, a.published_at, a.scraped_at, m.name as media_name, c.name_sk as country_name,
+                   CASE WHEN fav.id IS NOT NULL THEN 1 ELSE 0 END as is_favorite,
+                   ah.matched_text as searched_word
+            FROM alert_hits ah
+            JOIN articles a ON ah.article_id = a.id
+            JOIN media_outlets m ON a.media_id = m.id
+            JOIN countries c ON a.country_iso = c.iso_code
+            LEFT JOIN favorites fav ON a.id = fav.article_id
+            WHERE ah.alert_id = ?
+        """
+        params.append(alert_id)
+        if country:
+            sql += " AND a.country_iso = ?"
+            params.append(country)
+        if time_filter:
+            sql += time_filter
+            params.extend([since, since])
+        sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        cur.execute(sql, tuple(params))
+    elif query:
         # Pouzitie multilingvalnej expanzie (hlada v nativnych jazykoch sveta)
         fts_expr = build_fts_query(query)
         sql = f"""

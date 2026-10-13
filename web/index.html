@@ -3384,9 +3384,14 @@
                 if (radarActiveFilterWords && radarActiveFilterWords.size > 0) {
                     activeQuery = getSearchQueryForActiveWords();
                 }
-                let url = `/api/articles?period=${globePeriod}&limit=70&alerts_only=true`;
+                let url = `/api/articles?period=${globePeriod}&limit=70`;
+                if (activeGlobeAlertId) {
+                    url += `&alert_id=${encodeURIComponent(activeGlobeAlertId)}`;
+                } else {
+                    url += `&alerts_only=true`;
+                    if (activeQuery) url += `&query=${encodeURIComponent(activeQuery)}`;
+                }
                 if (iso) url += `&country=${iso}`;
-                if (activeQuery) url += `&query=${encodeURIComponent(activeQuery)}`;
                 
                 let hitsUrl = `/api/alert-hits?limit=50`;
                 if (iso) hitsUrl += `&country=${iso}`;
@@ -3540,6 +3545,7 @@
             }
 
             initOrUpdateGlobe();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
         }
     
         function setGlobeQuickTag(tag) {
@@ -3563,6 +3569,7 @@
                 if (badge) badge.classList.add('hidden');
             }
             initOrUpdateGlobe();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
         }
 
         function applyGlobeKeyword() {
@@ -3573,6 +3580,7 @@
             badge.classList.remove('hidden');
             document.getElementById('globe-active-word-text').innerText = val;
             initOrUpdateGlobe();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
         }
 
         function clearGlobeKeyword() {
@@ -3580,6 +3588,7 @@
             document.getElementById('globe-keyword-input').value = '';
             document.getElementById('globe-active-word-badge').classList.add('hidden');
             initOrUpdateGlobe();
+            loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
         }
 
         function resetFilters() {
