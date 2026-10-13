@@ -1241,6 +1241,12 @@
 
             if (view === 'feed') {
                 feedView.classList.remove('hidden');
+                // Hladký posun na úplný vrch stránky
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                // Čerstvé načítanie aktuálnych článkov, štatistík a radaru
+                loadArticles(currentCountry, currentQuery);
+                loadStats();
+                loadAlertsOverview();
             } else if (view === 'alerts') {
                 alertsView.classList.remove('hidden');
                 loadManageAlerts();
