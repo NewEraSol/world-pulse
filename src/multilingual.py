@@ -7,6 +7,11 @@ import translators as ts
 from typing import List, Set
 
 COMMON_TRANSLATIONS = {
+    "ai": ["ai", "artificial intelligence", "umelá inteligencia", "umělá inteligence", "künstliche intelligenz", "intelligence artificielle", "inteligencia artificial", "искусственный интеллект", "人工智能", "الذكاء الاصطناعي"],
+    "drony": ["dron", "drony", "drone", "drones", "uav", "drohne", "беспилотник", "дрон", "дроны", "无人机", "طائرة مسيرة"],
+    "sankcie": ["sankcie", "sankce", "sanctions", "sanktionen", "sanciones", "санкции", "制裁", "عقوبات"],
+    "voľby": ["voľby", "volby", "election", "elections", "wahl", "wahlen", "élections", "elecciones", "выборы", "选举", "انتخابات"],
+    "útok": ["útok", "utok", "attack", "angriff", "attaque", "ataque", "атака", "удар", "袭击", "هجوم"],
     "zlato": ["zlato", "gold", "oro", "or", "золото", "黄金", "金", "ذهب", "ouro", "guld"],
     "striebro": ["striebro", "stříbro", "silver", "silber", "argent", "plata", "серебро", "白银", "银", "فضة"],
     "ropa": ["ropa", "oil", "crude", "crude oil", "erdöl", "pétrole", "petróleo", "нефть", "原油", "石油", "نفط"],

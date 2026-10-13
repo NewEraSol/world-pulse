@@ -555,6 +555,26 @@
             </div>
         </div>
 
+        
+        <!-- Rýchle Radarové Filtre (Možnosť B: Hotové tagy bez zaťaženia servera) -->
+        <div class="bg-[#000000] px-4 py-2.5 rounded-xl border border-white/10 flex flex-wrap items-center gap-2 text-xs font-telemetry">
+            <span class="text-gray-400 uppercase font-bold text-[11px] flex items-center gap-1.5 mr-1">
+                <span class="w-2 h-2 rounded-full bg-[#990000]"></span>
+                RADAR TÉMY:
+            </span>
+            <button onclick="setGlobeQuickTag('')" id="gtag-all" class="globe-tag-btn px-2.5 py-1 rounded bg-[#990000] text-white font-bold transition text-[11px] border border-white/20">VŠETKO</button>
+            <button onclick="setGlobeQuickTag('vojna')" id="gtag-vojna" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">⚔️ VOJNA</button>
+            <button onclick="setGlobeQuickTag('jadrové')" id="gtag-jadrove" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">☢️ JADRO</button>
+            <button onclick="setGlobeQuickTag('ropa')" id="gtag-ropa" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🛢️ ROPA</button>
+            <button onclick="setGlobeQuickTag('zlato')" id="gtag-zlato" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🪙 ZLATO</button>
+            <button onclick="setGlobeQuickTag('ai')" id="gtag-ai" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🤖 AI</button>
+            <button onclick="setGlobeQuickTag('plyn')" id="gtag-plyn" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🔥 PLYN</button>
+            <button onclick="setGlobeQuickTag('drony')" id="gtag-drony" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🛰️ DRONY</button>
+            <button onclick="setGlobeQuickTag('inflácia')" id="gtag-inflacia" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">📈 INFLÁCIA</button>
+            <button onclick="setGlobeQuickTag('sankcie')" id="gtag-sankcie" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🚫 SANKCIE</button>
+            <button onclick="setGlobeQuickTag('voľby')" id="gtag-volby" class="globe-tag-btn px-2.5 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 transition text-[11px] border border-white/10">🗳️ VOĽBY</button>
+        </div>
+
         <!-- 3D Glóbus Plátno & Bočný Panel Informácií (Rozdelenie podľa Esquire Intel) -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-stretch">
             
@@ -3321,6 +3341,29 @@
             // Aktualizujeme 3D glóbus aj pravý stĺpec článkov pre nové časové okno
             initOrUpdateGlobe();
             loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, 0);
+        }
+
+        function setGlobeQuickTag(tag) {
+            globeQuery = tag;
+            document.querySelectorAll('.globe-tag-btn').forEach(b => {
+                b.classList.remove('bg-[#990000]', 'text-white', 'font-bold', 'border-white/20');
+                b.classList.add('bg-white/5', 'text-gray-300', 'border-white/10');
+            });
+            const activeId = tag ? `gtag-${tag.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}` : 'gtag-all';
+            const btn = document.getElementById(activeId) || document.getElementById('gtag-all');
+            if (btn) {
+                btn.classList.add('bg-[#990000]', 'text-white', 'font-bold', 'border-white/20');
+                btn.classList.remove('bg-white/5', 'text-gray-300', 'border-white/10');
+            }
+            const badge = document.getElementById('globe-active-word-badge');
+            if (tag) {
+                if (badge) badge.classList.remove('hidden');
+                const badgeText = document.getElementById('globe-active-word-text');
+                if (badgeText) badgeText.innerText = tag.toUpperCase();
+            } else {
+                if (badge) badge.classList.add('hidden');
+            }
+            initOrUpdateGlobe();
         }
 
         function applyGlobeKeyword() {
