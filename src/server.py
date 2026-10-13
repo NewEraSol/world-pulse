@@ -133,7 +133,22 @@ def get_countries(
             time_filter = " AND (a.published_at >= ? OR a.scraped_at >= ?)"
             time_params = [since, since]
 
-    if query:
+    if alert_id:
+        sql = f"""
+            SELECT c.*, COUNT(DISTINCT a.id) as article_count, COUNT(DISTINCT m.id) as media_count
+            FROM countries c
+            LEFT JOIN media_outlets m ON c.iso_code = m.country_iso AND m.is_active = 1
+            LEFT JOIN (
+                SELECT a.id, a.country_iso
+                FROM alert_hits ah
+                JOIN articles a ON ah.article_id = a.id
+                WHERE ah.alert_id = ? {time_filter}
+            ) a ON c.iso_code = a.country_iso
+            GROUP BY c.iso_code
+            ORDER BY article_count DESC, c.name_sk ASC
+        """
+        cur.execute(sql, (alert_id, *time_params))
+    elif query:
         fts_expr = build_fts_query(query)
         sql = f"""
             SELECT c.*, COUNT(DISTINCT a.id) as article_count, COUNT(DISTINCT m.id) as media_count
@@ -414,6 +429,7 @@ def verify_pin(payload: AdminVerifyRequest):
 class ProposalCreate(BaseModel):
     keyword: str
     author_nick: Optional[str] = "Anonym"
+    voter_hash: Optional[str] = None
 
 class ProposalVote(BaseModel):
     proposal_id: int
@@ -456,28 +472,67 @@ def get_community_proposals():
 def create_community_proposal(payload: ProposalCreate):
     kw = payload.keyword.strip()
     nick = (payload.author_nick or "Anonym").strip()[:30]
+    voter = (payload.voter_hash or "").strip()
+
     if not kw or len(kw) < 2 or len(kw) > 40:
         raise HTTPException(status_code=400, detail="Slovo musí mať od 2 do 40 znakov.")
     
     # Zakázané vulgárne slová / spam
-    forbidden = ['kokot', 'pica', 'kurva', 'jebat', 'debil', 'chuj']
+    forbidden = ['kokot', 'pica', 'kurva', 'jebat', 'debil', 'chuj', 'dick', 'fuck']
     if any(f in kw.lower() for f in forbidden):
         raise HTTPException(status_code=400, detail="Nevhodné kľúčové slovo.")
 
     conn = get_db()
     cur = conn.cursor()
+
+    # OCHRANA 1: Limit kapacity arény (max 50 čakajúcich kandidátov)
+    cur.execute("SELECT COUNT(*) FROM community_proposals WHERE status = 'pending'")
+    pending_count = cur.fetchone()[0]
+    if pending_count >= 50:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Hlasovacia aréna je plná (max. 50 slov). Zahlasuj za existujúce slová alebo počkaj na polnočné vyhodnotenie!")
+
+    # OCHRANA 2: Limit 1 návrh na návštevníka za 24 hodín
+    if voter:
+        cur.execute("""
+            SELECT id FROM community_proposals 
+            WHERE author_nick = ? AND created_at >= datetime('now', '-24 hours')
+        """, (nick,))
+        # Tiež kontrola cez tabuľku hlasov / odtlačkov ak existuje
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS proposal_ratelimit (
+                voter_hash TEXT PRIMARY KEY,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute("""
+            SELECT created_at FROM proposal_ratelimit 
+            WHERE voter_hash = ? AND created_at >= datetime('now', '-24 hours')
+        """, (voter,))
+        if cur.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail="Dnes si už jedno slovo navrhol (limit 1 návrh na 24h)! Ďalšie môžeš pridať zajtra.")
+
     try:
         cur.execute("""
             INSERT INTO community_proposals (keyword, author_nick, votes_up)
             VALUES (?, ?, 1)
         """, (kw, nick))
-        conn.commit()
         pid = cur.lastrowid
+        
+        # Zaznamenáme limit pre tohto používateľa
+        if voter:
+            cur.execute("""
+                INSERT OR REPLACE INTO proposal_ratelimit (voter_hash, created_at)
+                VALUES (?, datetime('now'))
+            """, (voter,))
+
+        conn.commit()
         conn.close()
         return {"status": "ok", "id": pid, "keyword": kw, "author_nick": nick}
     except sqlite3.IntegrityError:
         conn.close()
-        raise HTTPException(status_code=400, detail="Toto slovo už bolo navrhnuté! Môžeš zaň zahlasovať.")
+        raise HTTPException(status_code=400, detail="Toto slovo už bolo navrhnuté! Môžeš zaň zahlasovať v aréne.")
 
 @app.post("/api/community/vote")
 def vote_community_proposal(payload: ProposalVote):

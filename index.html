@@ -806,19 +806,54 @@
             </div>
         </div>
 
-        <!-- Hlavná mriežka: 1. Formulár na návrh (hore), 2. Aktívne alarmy v éteri, 3. Hlasovacia aréna -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Responzívna mriežka: Na mobile PORADIE: 1. Éter, 2. Aréna, 3. Formulár. Na desktope dvojstĺpec. -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex flex-col lg:grid">
             
-            <!-- Ľavý stĺpec (4 z 12): Formulár + Informácie o pravidlách -->
-            <div class="lg:col-span-4 space-y-6">
+            <!-- SEKCIA 1 & 2: V mobile hore (order-1 a order-2), na desktope v pravom stĺpci (lg:order-2 lg:col-span-8) -->
+            <div class="w-full lg:col-span-8 space-y-6 order-1 lg:order-2">
+                
+                <!-- 1. Karta: Práve v éteri (Aktívne komunitné alarmy) -->
+                <div id="community-active-section" class="bg-[#000000] p-5 rounded-xl border border-white/10 shadow-xl space-y-3">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping"></span>
+                            <h3 class="text-sm font-headline tracking-wide uppercase text-white font-bold">1. PRÁVE V ÉTERI // VÍŤAZI HLASOVANIA (LIVE)</h3>
+                        </div>
+                        <span class="text-[10px] font-telemetry text-gray-400 uppercase font-bold" id="active-community-count">0 AKTÍVNYCH</span>
+                    </div>
+                    <div id="community-active-list" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+                        <div class="text-xs text-gray-500 italic p-3">Načítavam aktívne alarmy...</div>
+                    </div>
+                </div>
+
+                <!-- 2. Karta: Hlasovacia aréna (Kandidáti na zajtra) -->
+                <div class="bg-[#000000] p-5 rounded-xl border border-white/10 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[#990000] font-bold text-base">⚔️</span>
+                            <h3 class="text-sm font-headline tracking-wide uppercase text-white font-bold">2. HLASOVACIA ARÉNA // KANDIDÁTI NA ZAJTRAJŠÍ VÝBER</h3>
+                        </div>
+                        <span class="text-[10px] font-telemetry text-gray-400 uppercase font-bold" id="voting-proposals-count">0 NÁVRHOV</span>
+                    </div>
+
+                    <!-- Zoznam kandidátov s hlasovaním -->
+                    <div id="community-voting-list" class="space-y-2">
+                        <div class="text-xs text-gray-400 p-4 text-center">Načítavam arénu návrhov...</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SEKCIA 3: Na mobile dole (order-3), na desktope v ľavom stĺpci (lg:order-1 lg:col-span-4) -->
+            <div class="w-full lg:col-span-4 space-y-6 order-2 lg:order-1">
                 <!-- Karta na pridanie návrhu -->
                 <div class="bg-[#000000] p-5 rounded-xl border border-white/10 shadow-xl space-y-4">
                     <div class="flex items-center gap-2 border-b border-white/10 pb-3">
                         <span class="text-[#990000] text-base font-bold">➕</span>
-                        <h3 class="text-sm font-headline tracking-wide uppercase text-white font-bold">NAVRHNÚŤ NOVÝ ALARM</h3>
+                        <h3 class="text-sm font-headline tracking-wide uppercase text-white font-bold">3. NAVRHNÚŤ NOVÝ ALARM</h3>
                     </div>
                     <p class="text-xs text-gray-400 leading-relaxed font-editorial">
-                        Zadaj kľúčové slovo alebo frazu (napr. <em>„F-35“, „Taiwan“, „hypersonické rakety“</em>). Tvoj návrh bude zaradený do hlasovania komunity.
+                        Zadaj kľúčové slovo alebo frázu (napr. <em>„F-35“, „Taiwan“, „hypersonické rakety“</em>). Tvoj návrh bude zaradený do hlasovania komunity (max. 1 návrh na 24h).
                     </p>
                     <div class="space-y-3 font-telemetry text-xs">
                         <div>
@@ -845,46 +880,12 @@
                     </div>
                     <ul class="space-y-2 list-disc list-inside leading-relaxed text-[11px]">
                         <li>Máš <strong class="text-white">3 hlasy na 24 hodín</strong> (▲ Za zaradenie / ▼ Za vyradenie).</li>
+                        <li>Každý návštevník môže navrhnúť <strong class="text-white">max. 1 slovo za 24 hodín</strong>.</li>
+                        <li>Kapacita arény je obmedzená na <strong class="text-white">50 aktívnych kandidátov</strong>.</li>
                         <li>Top 5 návrhov s najvyšším skóre postúpi o polnoci do ostrého monitoringu.</li>
                         <li>Slová sú automaticky preložené do 7 svetových jazykov (RU, AR, ZH, EN, DE, FR, ES).</li>
-                        <li>Neaktívne alarmy s nulovým zásahom sú vyradené v prospech nových tém.</li>
                     </ul>
                 </div>
-            </div>
-
-            <!-- Pravý stĺpec (8 z 12): Hlasovacia Aréna (Rebríček návrhov) -->
-            <div class="lg:col-span-8 space-y-6">
-                
-                <!-- Karta: Práve v éteri (Aktívne komunitné alarmy) -->
-                <div id="community-active-section" class="bg-[#000000] p-5 rounded-xl border border-white/10 shadow-xl space-y-3">
-                    <div class="flex justify-between items-center border-b border-white/10 pb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-green-500 animate-ping"></span>
-                            <h3 class="text-sm font-headline tracking-wide uppercase text-white font-bold">PRÁVE V ÉTERI // VÍŤAZI VČERAJŠIEHO HLASOVANIA</h3>
-                        </div>
-                        <span class="text-[10px] font-telemetry text-gray-400 uppercase font-bold" id="active-community-count">0 AKTÍVNYCH</span>
-                    </div>
-                    <div id="community-active-list" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
-                        <div class="text-xs text-gray-500 italic p-3">Zatiaľ žiadne aktívne komunitné alarmy. Zahlasuj nižšie za prvé slová!</div>
-                    </div>
-                </div>
-
-                <!-- Karta: Hlasovacia aréna (Kandidáti na zajtra) -->
-                <div class="bg-[#000000] p-5 rounded-xl border border-white/10 shadow-xl space-y-4">
-                    <div class="flex justify-between items-center border-b border-white/10 pb-2">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[#990000] font-bold">⚔️</span>
-                            <h3 class="text-sm font-headline tracking-wide uppercase text-white font-bold">HLASOVACIA ARÉNA // KANDIDÁTI NA ZAJTRAJŠÍ VÝBER</h3>
-                        </div>
-                        <span class="text-[10px] font-telemetry text-gray-400 uppercase font-bold" id="voting-proposals-count">0 NÁVRHOV</span>
-                    </div>
-
-                    <!-- Zoznam kandidátov s hlasovaním -->
-                    <div id="community-voting-list" class="space-y-2">
-                        <div class="text-xs text-gray-400 p-4 text-center">Načítavam arénu návrhov...</div>
-                    </div>
-                </div>
-
             </div>
 
         </div>
@@ -4004,11 +4005,12 @@
                 return;
             }
 
+            const voterHash = getVoterHash();
             try {
                 const res = await fetch('/api/community/proposals', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ keyword: kw, author_nick: nick || 'Anonym' })
+                    body: JSON.stringify({ keyword: kw, author_nick: nick || 'Anonym', voter_hash: voterHash })
                 });
                 const d = await res.json();
                 if (res.ok) {
