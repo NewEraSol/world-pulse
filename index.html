@@ -1340,6 +1340,101 @@
             } catch (e) { console.error(e); }
         }
 
+        
+        // ================= LIVE STREAM POLLING (Každých 20 sekúnd) =================
+        let livePollingTimer = null;
+        let latestKnownArticleId = 0;
+        let pendingNewArticles = [];
+
+        function updateLatestKnownArticleId(articles) {
+            if (articles && articles.length > 0) {
+                const maxId = Math.max(...articles.map(a => a.id || 0));
+                if (maxId > latestKnownArticleId) {
+                    latestKnownArticleId = maxId;
+                }
+            }
+        }
+
+        async function checkForNewLiveArticles() {
+            // Kontrolujeme len ak je aktívna záložka Živý tok a používateľ nemá zapnuté vlastné vyhľadávanie
+            const feedView = document.getElementById('view-feed');
+            if (!feedView || feedView.classList.contains('hidden')) return;
+            if (currentArticlesOffset > ARTICLES_BATCH_SIZE) return; // ak už používateľ scroloval do histórie, nezasahujeme
+
+            try {
+                let url = `/api/articles?limit=15&offset=0&period=${currentPeriod}`;
+                if (currentCountry) url += `&country=${currentCountry}`;
+                if (currentQuery) url += `&query=${encodeURIComponent(currentQuery)}`;
+
+                const res = await fetch(url);
+                const fresh = await res.json();
+                if (!fresh || fresh.length === 0) return;
+
+                if (!latestKnownArticleId) {
+                    updateLatestKnownArticleId(fresh);
+                    return;
+                }
+
+                // Nájdi články, ktoré sú novšie než posledný známy
+                const newItems = fresh.filter(a => a.id > latestKnownArticleId);
+                if (newItems.length > 0) {
+                    updateLatestKnownArticleId(newItems);
+                    
+                    const banner = document.getElementById('incoming-articles-banner');
+                    const listContainer = document.getElementById('feed-articles-list');
+                    
+                    // Ak je používateľ na samom vrchu stránky (scrollY < 120px), rovno ich hladko vložíme navrch
+                    if (window.scrollY < 120 && listContainer) {
+                        let insertHtml = '';
+                        newItems.reverse().forEach(a => {
+                            insertHtml += renderFeedArticleItem(a);
+                        });
+                        listContainer.insertAdjacentHTML('afterbegin', insertHtml);
+                        window.lastLoadedArticles = newItems.concat(window.lastLoadedArticles || []);
+                        loadStats();
+                        loadAlertsOverview();
+                    } else if (banner) {
+                        // Ak používateľ číta článok nižšie, zobrazíme diskrétnu lištu aby sme mu neposunuli obraz
+                        pendingNewArticles = newItems.concat(pendingNewArticles);
+                        banner.innerHTML = `
+                            <button onclick="revealPendingArticles()" class="w-full py-2.5 px-4 bg-[#990000] hover:bg-[#b30000] text-white text-xs font-telemetry font-bold tracking-wider uppercase transition shadow-lg flex items-center justify-between border border-white/20 animate-pulse">
+                                <span class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                                    <span>● PRIBUDLO ${pendingNewArticles.length} NOVÝCH DEPEŠÍ</span>
+                                </span>
+                                <span>KLIKNI PRE ZOBRAZENIE ↑</span>
+                            </button>
+                        `;
+                        banner.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                // Tichý fallback pri dočasnom výpadku siete
+            }
+        }
+
+        function revealPendingArticles() {
+            const banner = document.getElementById('incoming-articles-banner');
+            const listContainer = document.getElementById('feed-articles-list');
+            if (banner) banner.classList.add('hidden');
+            if (listContainer && pendingNewArticles.length > 0) {
+                let insertHtml = '';
+                pendingNewArticles.reverse().forEach(a => {
+                    insertHtml += renderFeedArticleItem(a);
+                });
+                listContainer.insertAdjacentHTML('afterbegin', insertHtml);
+                window.lastLoadedArticles = pendingNewArticles.concat(window.lastLoadedArticles || []);
+                pendingNewArticles = [];
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                loadStats();
+                loadAlertsOverview();
+            }
+        }
+
+        // Štartovač Live Pollingu každých 20 sekúnd
+        if (livePollingTimer) clearInterval(livePollingTimer);
+        livePollingTimer = setInterval(checkForNewLiveArticles, 20000);
+
         function renderFeedArticleItem(a) {
             const dateObj = new Date(a.published_at || a.scraped_at);
             const timeStr = dateObj.toLocaleDateString([], {day:'2-digit', month:'2-digit'}) + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -1450,7 +1545,7 @@
 
                 currentArticlesOffset = articles.length;
 
-                let html = '<div id="feed-articles-list" class="space-y-3">';
+                let html = '<div id="incoming-articles-banner" class="hidden mb-3"></div><div id="feed-articles-list" class="space-y-3">';
                 articles.forEach(a => {
                     html += renderFeedArticleItem(a);
                 });
