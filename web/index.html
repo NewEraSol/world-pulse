@@ -114,8 +114,8 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Presný biely Header podľa predlohy s červeným horným pásikom (na mobile sa pri scrolle plynule skryje) -->
-    <header id="main-header" class="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 md:px-8 py-0 flex flex-wrap justify-between items-center shadow-md relative transition-transform duration-300">
+    <!-- Pevne ukotvená horná biela lišta -->
+    <header id="main-header" class="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 md:px-8 py-0 flex flex-wrap justify-between items-center shadow-md relative">
         <!-- Červený pásik vľavo nad logom ako na predlohe -->
         <div class="absolute top-0 left-4 md:left-8 w-36 md:w-44 h-1.5 bg-[#990000]"></div>
 
@@ -157,8 +157,8 @@
     <!-- VIEW 1: ŽIVÝ TOK A ANALÝZA -->
     <main id="view-feed" class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-        <!-- Ľavý stĺpec: Časové obdobie, Hľadanie slova, Krajiny (na mobile podpora skrytia) -->
-        <div id="feed-sidebar-col" class="lg:col-span-1 space-y-5 transition-all duration-300">
+        <!-- Ľavý stĺpec na desktope (na mobile skrytý do druhej lišty / popupu) -->
+        <div id="feed-sidebar-col" class="hidden lg:block lg:col-span-1 space-y-5">
             
             <!-- ČASOVÝ OVLÁDACÍ PANEL (Na mobile zbalený s rozklikom) -->
             <div class="glass-panel p-4 rounded-xl flex flex-col">
@@ -244,16 +244,29 @@
 
         <!-- Stredný stĺpec: ŽIVÝ TOK SPRÁV -->
         <div class="lg:col-span-2 space-y-4">
-            <div class="glass-panel p-3.5 rounded-xl flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-6 bg-[#990000]"></div>
-                    <h2 class="text-lg font-headline uppercase tracking-wide text-white" id="feed-title">Globálny Tok Článkov</h2>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[11px] font-telemetry bg-white/10 text-white px-2 py-0.5 border border-white/20" id="current-filter-badge">Všetky krajiny · 24 hodín</span>
-                        <button onclick="resetFilters()" class="px-2 py-0.5 bg-[#990000] hover:bg-[#b30000] text-white text-[10px] font-telemetry font-bold transition uppercase flex items-center gap-1" title="Zrušiť filtre">
-                            <span>✕</span> Zrušiť
-                        </button>
+            <!-- Druhá pripnutá lišta (Sticky priamo pod hornou lištou na desktope aj mobile) -->
+            <div class="sticky top-[108px] md:top-[68px] z-30 bg-[#0a0b0e]/95 backdrop-blur-md border border-white/15 p-2.5 md:p-3 shadow-xl flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 md:gap-3 min-w-0">
+                    <div class="w-1.5 h-6 bg-[#990000] shrink-0"></div>
+                    <h2 class="text-sm md:text-lg font-headline uppercase tracking-wide text-white truncate shrink-0" id="feed-title">Globálny Tok</h2>
+                    
+                    <!-- Ikona filtra vedľa nápisu (otvára celý panel) -->
+                    <button onclick="openMobileFilterModal()" class="px-2 py-1 bg-black hover:bg-[#990000] border border-white/25 text-white text-xs font-telemetry font-bold flex items-center gap-1 shrink-0 transition shadow-sm" title="Otvoriť filter časového obdobia, krajín a vyhľadávania">
+                        <span>⚙️</span>
+                        <span class="hidden sm:inline">FILTER</span>
+                    </button>
+
+                    <!-- Rozklikávací box Všetky krajiny - 24 hodín (kliknutím otvorí celý panel) -->
+                    <div onclick="openMobileFilterModal()" class="cursor-pointer group flex items-center gap-1 bg-white/10 hover:bg-white/20 border border-white/20 px-2 py-1 transition select-none min-w-0" title="Klikni pre zmenu krajiny alebo obdobia">
+                        <span class="text-[10px] md:text-[11px] font-telemetry text-white font-bold truncate" id="current-filter-badge">Všetky krajiny · 24 hodín</span>
+                        <span class="text-[9px] text-[#990000] group-hover:text-white transition shrink-0 font-bold">▼</span>
                     </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="resetFilters()" class="px-2 py-1 bg-[#990000] hover:bg-[#b30000] text-white text-[10px] font-telemetry font-bold transition uppercase flex items-center gap-1" title="Vynulovať filtre">
+                        <span>✕</span> <span class="hidden sm:inline">Zrušiť</span>
+                    </button>
                 </div>
             </div>
 
@@ -655,6 +668,82 @@
 
     </main>
 
+    <!-- MODAL PANEL: ČASOVÉ OBDOBIE, KRAJINY A FREKVENCIA SLOVA -->
+    <div id="mobile-filter-modal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 md:p-6">
+        <div class="bg-black text-white border-2 border-white/20 w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl relative">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-white/15 flex justify-between items-center bg-[#11141a]">
+                <div class="flex items-center gap-2">
+                    <div class="w-1.5 h-5 bg-[#990000]"></div>
+                    <span class="text-xs font-headline uppercase tracking-wider text-white font-bold">OVLÁDACÍ FILTER CENTRÁLA</span>
+                </div>
+                <button onclick="closeMobileFilterModal()" class="w-8 h-8 flex items-center justify-center bg-black hover:bg-[#990000] text-white text-base font-bold transition border border-white/20">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Modal Body s filtrami -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <!-- 1. ČASOVÉ OBDOBIE -->
+                <div class="border border-white/10 p-3 bg-[#0d0e12]">
+                    <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-white/10">
+                        <span class="text-[11px] font-headline uppercase tracking-wider text-[#990000] font-bold">⏱️ ČASOVÉ OBDOBIE</span>
+                        <span class="text-[10px] font-telemetry text-gray-400" id="modal-filter-period-label">Aktívne: 24 hodín</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 text-xs font-telemetry">
+                        <button onclick="setPeriod('1h'); closeMobileFilterModal();" class="py-2 px-1 text-center bg-black border border-white/15 hover:border-[#990000] hover:bg-[#990000] transition">1 hodina</button>
+                        <button onclick="setPeriod('6h'); closeMobileFilterModal();" class="py-2 px-1 text-center bg-black border border-white/15 hover:border-[#990000] hover:bg-[#990000] transition">6 hodín</button>
+                        <button onclick="setPeriod('24h'); closeMobileFilterModal();" class="py-2 px-1 text-center bg-black border border-white/15 hover:border-[#990000] hover:bg-[#990000] transition">24 hodín</button>
+                        <button onclick="setPeriod('7d'); closeMobileFilterModal();" class="py-2 px-1 text-center bg-black border border-white/15 hover:border-[#990000] hover:bg-[#990000] transition">7 dní</button>
+                        <button onclick="setPeriod('30d'); closeMobileFilterModal();" class="py-2 px-1 text-center bg-black border border-white/15 hover:border-[#990000] hover:bg-[#990000] transition">30 dní</button>
+                        <button onclick="setPeriod('all'); closeMobileFilterModal();" class="py-2 px-1 text-center bg-black border border-white/15 hover:border-[#990000] hover:bg-[#990000] transition">Všetko</button>
+                    </div>
+                </div>
+
+                <!-- 2. HĽADANIE SLOVA (FREKVENCIA) -->
+                <div class="border border-white/10 p-3 bg-[#0d0e12]">
+                    <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-white/10">
+                        <span class="text-[11px] font-headline uppercase tracking-wider text-[#990000] font-bold">🔍 FREKVENCIA SLOVA (TEP)</span>
+                        <span class="text-[9px] bg-[#990000] text-white px-1.5 py-0.2 font-telemetry">AI SEARCH</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="text" id="modal-kw-input" placeholder="Zlato, ropa, Boeing..." 
+                               class="flex-1 bg-black border border-white/20 px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#990000] font-mono"
+                               onkeydown="if(event.key==='Enter') executeModalKwSearch()">
+                        <button onclick="executeModalKwSearch()" class="px-4 py-1.5 bg-[#990000] hover:bg-[#b30000] text-white text-xs font-telemetry font-bold uppercase transition">
+                            HĽADAŤ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. VÝBER KRAJINY -->
+                <div class="border border-white/10 p-3 bg-[#0d0e12] flex flex-col">
+                    <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-white/10">
+                        <span class="text-[11px] font-headline uppercase tracking-wider text-[#990000] font-bold">📍 VÝBER KRAJINY</span>
+                        <button onclick="filterCountry(''); closeMobileFilterModal();" class="text-[10px] font-telemetry text-gray-300 hover:text-white uppercase underline">
+                            🌐 Všetky krajiny
+                        </button>
+                    </div>
+                    <div class="max-h-60 overflow-y-auto space-y-1 pr-1 font-telemetry text-xs" id="modal-countries-list">
+                        <!-- Naplní JS -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 border-t border-white/15 bg-[#11141a] flex justify-between items-center">
+                <button onclick="resetFilters(); closeMobileFilterModal();" class="px-3 py-1.5 bg-black hover:bg-[#990000] border border-white/20 text-white text-xs font-telemetry font-bold uppercase transition">
+                    ✕ VYNULOVAT VŠETKO
+                </button>
+                <button onclick="closeMobileFilterModal()" class="px-4 py-1.5 bg-white text-black hover:bg-gray-200 text-xs font-telemetry font-bold uppercase transition">
+                    ZOBRAZIŤ VÝSLEDKY
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DIALÓG: ADMIN PIN OVERENIE -->
     <div id="admin-pin-modal" class="fixed inset-0 z-50 hidden bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
         <div class="bg-white text-black border-2 border-black w-full max-w-sm p-6 shadow-2xl relative">
@@ -858,58 +947,48 @@
         
         
         // ================= MOBILNÉ SKRÝVANIE PRI SCROLLOVANÍ (SMART HEADER & FILTERS) =================
-        let lastScrollTop = 0;
-        let isHeaderHidden = false;
+        
+        // ================= POPUP FILTER PANEL (MOBIL + DESKTOP) =================
+        function openMobileFilterModal() {
+            const m = document.getElementById('mobile-filter-modal');
+            if (!m) return;
+            m.classList.remove('hidden');
 
-        function toggleFeedSearchMobile() {
-            if (window.innerWidth >= 768) return;
-            const wrapper = document.getElementById('feed-search-wrapper');
-            const arrow = document.getElementById('feed-search-arrow');
-            if (!wrapper) return;
-            const isHidden = wrapper.classList.contains('hidden');
-            if (isHidden) {
-                wrapper.classList.remove('hidden');
-                if (arrow) arrow.innerText = '▲';
-            } else {
-                wrapper.classList.add('hidden');
-                if (arrow) arrow.innerText = '▼';
+            // Synchronizujeme zoznam krajín do modalu
+            const srcList = document.getElementById('country-list');
+            const destList = document.getElementById('modal-countries-list');
+            if (srcList && destList) {
+                destList.innerHTML = srcList.innerHTML;
+                // Preklik na položku v modale ho rovno zatvorí
+                destList.querySelectorAll('button').forEach(btn => {
+                    const origClick = btn.getAttribute('onclick');
+                    if (origClick && !origClick.includes('closeMobileFilterModal')) {
+                        btn.setAttribute('onclick', origClick + '; closeMobileFilterModal();');
+                    }
+                });
             }
+
+            const pLabel = document.getElementById('modal-filter-period-label');
+            const periodMap = {'1h':'1 hodina', '6h':'6 hodín', '24h':'24 hodín', '7d':'7 dní', '30d':'30 dní', 'all':'Všetko'};
+            if (pLabel) pLabel.innerText = `Aktívne: ${periodMap[currentPeriod] || currentPeriod}`;
         }
 
-        function handleWindowScroll() {
-            if (window.innerWidth >= 768) return; // len na mobile
-            const st = window.pageYOffset || document.documentElement.scrollTop;
-            const header = document.getElementById('main-header');
-            const sidebar = document.getElementById('feed-sidebar-col');
-            if (!header) return;
-
-            // Minimálny posun pre aktiváciu (aby to nekmitalo pri drobných dotykoch)
-            if (Math.abs(lastScrollTop - st) <= 10) return;
-
-            if (st > lastScrollTop && st > 80) {
-                // SCROLL DOLE: Skryjeme horné menu aby články mali celú obrazovku
-                if (!isHeaderHidden) {
-                    header.style.transform = 'translateY(-100%)';
-                    if (sidebar) {
-                        // Na mobile jemne zbalíme a stlmíme bočné filtre
-                        sidebar.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
-                    }
-                    isHeaderHidden = true;
-                }
-            } else if (st < lastScrollTop) {
-                // SCROLL HORE: Okamžite vrátime menu a filtre späť
-                if (isHeaderHidden) {
-                    header.style.transform = 'translateY(0)';
-                    if (sidebar) {
-                        sidebar.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
-                    }
-                    isHeaderHidden = false;
-                }
-            }
-            lastScrollTop = st <= 0 ? 0 : st;
+        function closeMobileFilterModal() {
+            const m = document.getElementById('mobile-filter-modal');
+            if (m) m.classList.add('hidden');
         }
 
-        window.addEventListener('scroll', handleWindowScroll, { passive: true });
+        function executeModalKwSearch() {
+            const inp = document.getElementById('modal-kw-input');
+            const mainInp = document.getElementById('keyword-input');
+            if (!inp) return;
+            const val = inp.value.trim();
+            if (mainInp) mainInp.value = val;
+            closeMobileFilterModal();
+            analyzeKeyword();
+        }
+
+
 
         function toggleFeedPeriodMobile() {
             if (window.innerWidth >= 768) return;
