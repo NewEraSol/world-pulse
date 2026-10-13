@@ -80,11 +80,9 @@ async def collect_all():
         tasks = [fetch_source(session, m) for m in media_list]
         results = await asyncio.gather(*tasks)
 
-    conn = sqlite3.connect(DB_PATH, timeout=60.0)
-    cur = conn.cursor()
-
     new_articles_count = 0
     alert_hits_count = 0
+    active_alerts = get_active_alerts()
 
     for media, raw_content in results:
         if not raw_content:

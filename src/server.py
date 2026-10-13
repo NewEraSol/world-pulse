@@ -382,6 +382,116 @@ def verify_pin(payload: AdminVerifyRequest):
         return {"status": "ok", "valid": True}
     raise HTTPException(status_code=403, detail="Nesprávny PIN")
 
+
+# ----------------- ALARMY HLASOVANIA (COMMUNITY PROPOSALS & VOTING) -----------------
+
+class ProposalCreate(BaseModel):
+    keyword: str
+    author_nick: Optional[str] = "Anonym"
+
+class ProposalVote(BaseModel):
+    proposal_id: int
+    voter_hash: str
+    vote_type: int # 1 = UP, -1 = DOWN
+
+@app.get("/api/community/proposals")
+def get_community_proposals():
+    conn = get_db()
+    cur = conn.cursor()
+    # Získame aktívne komunitné alarmy (ktoré už bežia v éteri)
+    cur.execute("""
+        SELECT a.id as alert_id, a.name, a.author_nick, a.created_at,
+               COUNT(ah.id) as hits_count
+        FROM alerts a
+        LEFT JOIN alert_hits ah ON a.id = ah.alert_id
+        WHERE a.community_proposal_id IS NOT NULL AND a.is_active = 1
+        GROUP BY a.id
+        ORDER BY hits_count DESC
+    """)
+    active_in_feed = [dict(r) for r in cur.fetchall()]
+
+    # Získame návrhy, za ktoré sa aktuálne hlasuje
+    cur.execute("""
+        SELECT id, keyword, author_nick, votes_up, votes_down, 
+               (votes_up - votes_down) as score, created_at
+        FROM community_proposals
+        WHERE status = 'pending'
+        ORDER BY score DESC, votes_up DESC, id DESC
+        LIMIT 50
+    """)
+    voting_arena = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return {
+        "active_community_alerts": active_in_feed,
+        "voting_proposals": voting_arena
+    }
+
+@app.post("/api/community/proposals")
+def create_community_proposal(payload: ProposalCreate):
+    kw = payload.keyword.strip()
+    nick = (payload.author_nick or "Anonym").strip()[:30]
+    if not kw or len(kw) < 2 or len(kw) > 40:
+        raise HTTPException(status_code=400, detail="Slovo musí mať od 2 do 40 znakov.")
+    
+    # Zakázané vulgárne slová / spam
+    forbidden = ['kokot', 'pica', 'kurva', 'jebat', 'debil', 'chuj']
+    if any(f in kw.lower() for f in forbidden):
+        raise HTTPException(status_code=400, detail="Nevhodné kľúčové slovo.")
+
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+            INSERT INTO community_proposals (keyword, author_nick, votes_up)
+            VALUES (?, ?, 1)
+        """, (kw, nick))
+        conn.commit()
+        pid = cur.lastrowid
+        conn.close()
+        return {"status": "ok", "id": pid, "keyword": kw, "author_nick": nick}
+    except sqlite3.IntegrityError:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Toto slovo už bolo navrhnuté! Môžeš zaň zahlasovať.")
+
+@app.post("/api/community/vote")
+def vote_community_proposal(payload: ProposalVote):
+    if payload.vote_type not in [1, -1]:
+        raise HTTPException(status_code=400, detail="Neplatný typ hlasu.")
+    voter = payload.voter_hash.strip()
+    if not voter or len(voter) < 8:
+        raise HTTPException(status_code=400, detail="Neplatná identifikácia hlasujúceho.")
+
+    conn = get_db()
+    cur = conn.cursor()
+    # Skontrolujeme, či už nehlasoval za tento konkrétny návrh
+    cur.execute("SELECT id FROM community_votes WHERE proposal_id = ? AND voter_hash = ?", (payload.proposal_id, voter))
+    if cur.fetchone():
+        conn.close()
+        raise HTTPException(status_code=400, detail="Za tento návrh si už hlasoval!")
+
+    try:
+        cur.execute("""
+            INSERT INTO community_votes (proposal_id, voter_hash, vote_type)
+            VALUES (?, ?, ?)
+        """, (payload.proposal_id, voter, payload.vote_type))
+        
+        if payload.vote_type == 1:
+            cur.execute("UPDATE community_proposals SET votes_up = votes_up + 1 WHERE id = ?", (payload.proposal_id,))
+        else:
+            cur.execute("UPDATE community_proposals SET votes_down = votes_down + 1 WHERE id = ?", (payload.proposal_id,))
+        
+        conn.commit()
+        
+        # Získame nové skóre
+        cur.execute("SELECT votes_up, votes_down, (votes_up - votes_down) as score FROM community_proposals WHERE id = ?", (payload.proposal_id,))
+        row = dict(cur.fetchone())
+        conn.close()
+        return {"status": "ok", **row}
+    except Exception as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ----------------- ALARMY & VÝSTRAHY (CRUD) -----------------
 
 
