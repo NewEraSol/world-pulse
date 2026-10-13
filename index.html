@@ -767,6 +767,10 @@
                     <span>Zvýraznené slová zodpovedajú aktívnym radarom a hľadaným témam</span>
                 </div>
                 <div class="flex items-center gap-3">
+                    <button id="modal-share-btn" onclick="shareArticle()" class="px-3.5 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20 hover:border-[#990000]" title="Skopírovať priamy odkaz na tento článok">
+                        <span id="modal-share-icon">🔗</span>
+                        <span id="modal-share-text">ZDIEĽAŤ ČLÁNOK</span>
+                    </button>
                     <button id="modal-report-btn" onclick="reportTranslationIssue()" class="px-3.5 py-2 bg-black hover:bg-[#990000] text-gray-300 hover:text-white text-xs font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20 hover:border-[#990000]" title="Nahlásiť nepreložený článok alebo chybu v preklade pre vylepšenie AI prekladača">
                         <span id="modal-report-icon">⚠️</span>
                         <span id="modal-report-text">NAHLÁSIŤ CHYBU PREKLADU</span>
@@ -1176,6 +1180,20 @@
                 if (repTxt) repTxt.innerText = 'NAHLÁSIŤ CHYBU PREKLADU';
                 if (repIco) repIco.innerText = '⚠️';
             }
+            const shareBtn = document.getElementById('modal-share-btn');
+            const shareTxt = document.getElementById('modal-share-text');
+            const shareIco = document.getElementById('modal-share-icon');
+            if (shareBtn) {
+                shareBtn.className = 'px-3.5 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20 hover:border-[#990000]';
+                if (shareTxt) shareTxt.innerText = 'ZDIEĽAŤ ČLÁNOK';
+                if (shareIco) shareIco.innerText = '🔗';
+            }
+            // Aktualizácia URL prehliadača s parametrom článku bez reloadu
+            try {
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('article', articleId);
+                window.history.pushState({ articleId: articleId }, '', newUrl.toString());
+            } catch(e) {}
             document.getElementById('modal-orig-link').href = '#';
 
             modal.classList.remove('hidden');
@@ -1316,6 +1334,84 @@
             `;
         }
 
+
+        async function shareArticle() {
+            if (!currentArticleData || !currentArticleData.id) return;
+            const aid = currentArticleData.id;
+            const shareUrl = `${window.location.origin}/?article=${aid}`;
+            const title = currentArticleData.title_sk || currentArticleData.title_orig || 'Spravodajský Tep Sveta';
+
+            const shareBtn = document.getElementById('modal-share-btn');
+            const shareTxt = document.getElementById('modal-share-text');
+            const shareIco = document.getElementById('modal-share-icon');
+
+            // 1. Ak zariadenie (napr. mobil) podporuje natívne zdieľanie navigator.share
+            if (navigator.share && /mobile|android|iphone|ipad/i.test(navigator.userAgent)) {
+                try {
+                    await navigator.share({
+                        title: title,
+                        text: `Čítaj na Spravodajskom Tepe Sveta: ${title}`,
+                        url: shareUrl
+                    });
+                    return;
+                } catch(err) {
+                    // Ak používateľ zrušil alebo nepodporované, pokračujeme skopírovaním linku
+                }
+            }
+
+            // 2. Fallback: Skopírovanie do schránky (Clipboard)
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                } else {
+                    const tempInp = document.createElement('input');
+                    tempInp.value = shareUrl;
+                    document.body.appendChild(tempInp);
+                    tempInp.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempInp);
+                }
+                if (shareBtn) {
+                    shareBtn.className = 'px-3.5 py-2 bg-emerald-950 border border-emerald-600 text-emerald-300 text-xs font-telemetry font-bold flex items-center gap-1.5';
+                    if (shareTxt) shareTxt.innerText = 'ODKAZ SKOPÍROVANÝ! ✓';
+                    if (shareIco) shareIco.innerText = '✓';
+                    setTimeout(() => {
+                        if (shareBtn) {
+                            shareBtn.className = 'px-3.5 py-2 bg-black hover:bg-[#990000] text-white text-xs font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20 hover:border-[#990000]';
+                            if (shareTxt) shareTxt.innerText = 'ZDIEĽAŤ ČLÁNOK';
+                            if (shareIco) shareIco.innerText = '🔗';
+                        }
+                    }, 2500);
+                }
+            } catch(e) {
+                prompt('Odkaz na článok skopíruj tu:', shareUrl);
+            }
+        }
+
+        // Kontrola URL pri otvorení stránky - ak link obsahuje ?article=ID, článok sa okamžite otvorí
+        function checkUrlForSharedArticle() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const sharedArticleId = params.get('article');
+                if (sharedArticleId) {
+                    const aid = parseInt(sharedArticleId, 10);
+                    if (!isNaN(aid) && aid > 0) {
+                        openArticleModal(aid);
+                    }
+                }
+            } catch(e) {}
+        }
+        window.addEventListener('DOMContentLoaded', checkUrlForSharedArticle);
+        window.addEventListener('popstate', (e) => {
+            const params = new URLSearchParams(window.location.search);
+            const aid = params.get('article');
+            if (aid) {
+                openArticleModal(parseInt(aid, 10));
+            } else {
+                document.getElementById('article-modal').classList.add('hidden');
+            }
+        });
+
         async function reportTranslationIssue() {
             if (!currentArticleData || !currentArticleData.id) return;
             const aid = currentArticleData.id;
@@ -1363,6 +1459,14 @@
             document.getElementById('modal-title-sk').innerText = '';
             document.getElementById('modal-title-en').innerText = '';
             document.getElementById('modal-radar-hits').innerHTML = '';
+            // Odstránenie parametra article z URL
+            try {
+                const newUrl = new URL(window.location.href);
+                if (newUrl.searchParams.has('article')) {
+                    newUrl.searchParams.delete('article');
+                    window.history.pushState({}, '', newUrl.toString());
+                }
+            } catch(e) {}
         }
 
         document.addEventListener('keydown', (e) => {
