@@ -3829,14 +3829,16 @@
             const icon = document.getElementById('modal-fav-icon');
             const text = document.getElementById('modal-fav-text');
             if (!btn) return;
+            const isAdmin = typeof window.isAdminActive === 'function' ? window.isAdminActive() : Boolean(localStorage.getItem('tep_admin_pin'));
+            const hideClass = isAdmin ? '' : 'hidden';
             if (isFav) {
-                btn.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border bg-[#990000] border-white/20 text-white hover:bg-[#990000]';
+                btn.className = `admin-only ${hideClass} px-2.5 py-1 text-[10.5px] font-telemetry font-bold transition flex items-center gap-1 border bg-[#990000] border-white/20 text-white hover:bg-[#990000]`;
                 icon.innerText = '★';
-                text.innerText = 'Uložené v knižnici';
+                text.innerText = 'ULOŽENÉ';
             } else {
-                btn.className = 'px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 border bg-gray-900 border-gray-700 text-gray-300 hover:text-white hover:border-white/20';
+                btn.className = `admin-only ${hideClass} px-2.5 py-1 text-[10.5px] font-telemetry font-bold transition flex items-center gap-1 border bg-black hover:bg-gray-800 text-gray-200 border-white/20`;
                 icon.innerText = '☆';
-                text.innerText = 'Uložiť do knižnice';
+                text.innerText = 'ULOŽIŤ';
             }
         }
 
