@@ -2465,7 +2465,8 @@
 
         function filterCountry(iso, name = '') {
             currentCountry = iso;
-            document.getElementById('feed-title').innerText = iso ? `Správy: ${name}` : 'Globálny Tok Článkov';
+            const feedTitle = document.getElementById('feed-title');
+            if (feedTitle) feedTitle.innerText = iso ? `Správy: ${name}` : 'Globálny Tok';
             updateBadge();
             loadCountries();
             loadArticles(currentCountry, currentQuery);
@@ -3688,6 +3689,8 @@
             currentCountry = '';
             currentPeriod = '24h';
             currentQuery = '';
+            const feedTitle = document.getElementById('feed-title');
+            if (feedTitle) feedTitle.innerText = 'Globálny Tok';
             document.getElementById('keyword-input').value = '';
             document.getElementById('keyword-result').classList.add('hidden');
             document.querySelectorAll('.time-pill').forEach(el => el.classList.remove('active'));
