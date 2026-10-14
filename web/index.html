@@ -1961,7 +1961,6 @@
                 document.getElementById('modal-media-country').innerText = `${currentArticleData.media_name} (${currentArticleData.country_name})`;
                 const pubStr = currentArticleData.published_at ? `🕒 Vydané: ${formatTelemetryDateFull(currentArticleData.published_at)}` : '';
                 const scrStr = currentArticleData.scraped_at ? `📡 Zachytené: ${formatTelemetryDateFull(currentArticleData.scraped_at)}` : '';
-                const scrStr = currentArticleData.scraped_at ? `📡 Zachytené: ${formatTelemetryDateFull(currentArticleData.scraped_at)}` : '';
                 const viewsStr = `👁️ ${currentArticleData.views_count || 1} videní`;
                 document.getElementById('modal-date').innerText = [pubStr, scrStr, viewsStr].filter(Boolean).join('  |  ');
                 document.getElementById('modal-title-orig').innerText = currentArticleData.title_orig;
