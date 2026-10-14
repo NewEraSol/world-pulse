@@ -538,7 +538,7 @@
                 <div>
                     <h2 class="text-2xl font-headline tracking-wide uppercase text-white flex items-center gap-2">
                         <span>LIVE 3D GLOBE PULSE</span>
-                        <span class="text-[10px] font-telemetry bg-[#990000]/20 text-[#ff6b6b] border border-[#990000]/40 px-2 py-0.5 rounded font-bold">COBE RADAR</span>
+                        <span class="text-[10px] font-telemetry bg-[#990000]/20 text-[#ff6b6b] border border-[#990000]/40 px-2 py-0.5 rounded font-bold">RADAR</span>
                     </h2>
                     <p class="text-xs text-gray-400 font-editorial italic mt-0.5">Svetový spravodajský monitoring v reálnom čase. Otáčaj 3D planétu a zachytávaj aktívne signály.</p>
                 </div>
@@ -957,6 +957,23 @@
                 </div>
                 <div class="text-[11px] font-telemetry text-gray-700 font-bold" id="modal-words-status-text">
                     Stav: VŠETKY ALARMY
+                </div>
+            </div>
+
+            <!-- ČASOVÝ RÁMEC PRE 3D GLÓBUS & RADAR -->
+            <div class="p-3 sm:p-4 bg-gray-50 border-b border-gray-200">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-[10.5px] font-headline uppercase text-gray-600 font-bold tracking-wider flex items-center gap-1.5">
+                        <span>⏱️</span> ČASOVÝ RÁMEC MONITORINGU GLÓBUSU:
+                    </span>
+                    <span id="modal-active-period-label" class="text-[10px] font-telemetry font-bold text-[#990000] uppercase">24H</span>
+                </div>
+                <div class="grid grid-cols-5 gap-1.5 sm:gap-2 font-telemetry text-xs" id="modal-period-buttons">
+                    <button type="button" onclick="selectModalGlobePeriod('1h')" id="modal-gp-1h" class="modal-gp-btn py-1.5 text-center border font-bold transition uppercase">1 HOD</button>
+                    <button type="button" onclick="selectModalGlobePeriod('6h')" id="modal-gp-6h" class="modal-gp-btn py-1.5 text-center border font-bold transition uppercase">6 HOD</button>
+                    <button type="button" onclick="selectModalGlobePeriod('24h')" id="modal-gp-24h" class="modal-gp-btn py-1.5 text-center border font-bold transition uppercase">24 HOD</button>
+                    <button type="button" onclick="selectModalGlobePeriod('7d')" id="modal-gp-7d" class="modal-gp-btn py-1.5 text-center border font-bold transition uppercase">7 DNÍ</button>
+                    <button type="button" onclick="selectModalGlobePeriod('all')" id="modal-gp-all" class="modal-gp-btn py-1.5 text-center border font-bold transition uppercase">VŠETKO</button>
                 </div>
             </div>
 
@@ -3066,6 +3083,7 @@
         }
 
         function openRadarWordsModal() {
+            syncModalPeriodButtons();
             const modal = document.getElementById('radar-words-modal');
             if (!modal) return;
             modal.classList.remove('hidden');
@@ -3093,6 +3111,29 @@
             renderRadarModalContent();
             renderRadarActiveWords();
             loadGlobeCountryArticles(currentSelectedCountryIso, currentSelectedCountryName, currentCountryTotalCount);
+        }
+
+        function selectModalGlobePeriod(p) {
+            setGlobePeriod(p);
+            syncModalPeriodButtons();
+        }
+
+        function syncModalPeriodButtons() {
+            const periods = ['1h', '6h', '24h', '7d', 'all'];
+            const pLabel = document.getElementById('modal-active-period-label');
+            const periodNames = {'1h': '1 hodina', '6h': '6 hodín', '24h': '24 hodín (dnes)', '7d': '7 dní', 'all': 'Celá história (Všetko)'};
+            if (pLabel) pLabel.innerText = periodNames[globePeriod] || globePeriod;
+
+            periods.forEach(k => {
+                const btn = document.getElementById('modal-gp-' + k);
+                if (btn) {
+                    if (k === globePeriod) {
+                        btn.className = 'modal-gp-btn py-1.5 text-center border font-bold transition uppercase bg-[#990000] border-[#990000] text-white shadow-sm ring-1 ring-[#990000]';
+                    } else {
+                        btn.className = 'modal-gp-btn py-1.5 text-center border font-bold transition uppercase bg-white hover:bg-gray-100 border-gray-300 text-black';
+                    }
+                }
+            });
         }
 
         function renderRadarModalContent() {

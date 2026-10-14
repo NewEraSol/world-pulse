@@ -30,6 +30,32 @@ def clean_html(raw_html: str) -> str:
     cleantext = re.sub(cleanr, '', raw_html)
     return ' '.join(cleantext.split()).strip()
 
+def extract_telegram_clean_content(text_el):
+    if not text_el:
+        return '', '', ''
+    full_text = text_el.get_text(separator='\n').strip()
+    if not full_text:
+        return '', '', ''
+
+    # Odstranenie úvodných emoji a prázdnych symbolov
+    clean_no_lead_emoji = re.sub(r'^[\s\W_]+', '', full_text).strip()
+    one_line = ' '.join([l.strip() for l in clean_no_lead_emoji.split('\n') if l.strip()])
+    
+    # Vyhľadanie prvej zmysluplnej vety
+    sentences = re.split(r'(?<=[.!?])\s+', one_line)
+    if sentences and len(sentences[0]) >= 12:
+        title = sentences[0]
+    else:
+        title = one_line
+        
+    if len(title) > 130:
+        title = title[:127] + '...'
+    if not title:
+        title = full_text[:80]
+
+    perex = full_text[:400]
+    return title.strip(), perex, full_text
+
 def parse_views_count(view_str: str) -> int:
     if not view_str:
         return 0
@@ -114,10 +140,9 @@ async def collect_all():
                     if not full_text:
                         continue
                     
-                    lines = [line.strip() for line in full_text.split('\n') if line.strip()]
-                    title = lines[0] if lines else full_text[:120]
-                    if len(title) > 160:
-                        title = title[:157] + '...'
+                    title, perex, clean_full_text = extract_telegram_clean_content(text_el)
+                    if not title or len(title) < 4:
+                        continue
 
                     post_link_el = m.find('a', class_='tgme_widget_message_date')
                     post_url = post_link_el['href'] if post_link_el and post_link_el.has_attr('href') else rss_url
@@ -132,8 +157,8 @@ async def collect_all():
                     parsed_entries.append({
                         "title": title,
                         "url": post_url,
-                        "perex": full_text[:400],
-                        "full_text": full_text,
+                        "perex": perex,
+                        "full_text": clean_full_text,
                         "published": published,
                         "guid": guid,
                         "views": views_count
@@ -231,7 +256,7 @@ async def collect_all():
 
                         if matched_word:
                             cur.execute("""
-                                INSERT OR IGNORE INTO alert_hits (alert_id, article_id, matched_term)
+                                INSERT OR IGNORE INTO alert_hits (alert_id, article_id, matched_text)
                                 VALUES (?, ?, ?)
                             """, (alert['id'], article_id, matched_word))
                             alert_hits_count += 1

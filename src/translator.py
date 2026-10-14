@@ -73,8 +73,10 @@ def get_or_translate_article(article_id: int):
     needs_update = False
 
     # 1. Extrakcia plného originálneho textu článku, ak ešte nie je v DB
-    full_text_orig = art.get('content_snippet')
-    if not full_text_orig or len(full_text_orig.strip()) < 100:
+    full_text_orig = art.get('content_snippet') or art.get('perex_orig') or ''
+    # Pre Telegram príspevky (t.me) NIKDY nevoláme trafilaturu (pretože stiahne len widget boilerplate 'Download Context Embed Copy')
+    is_tg = 't.me' in (art.get('url') or '')
+    if not is_tg and (not full_text_orig or len(full_text_orig.strip()) < 100):
         try:
             downloaded = trafilatura.fetch_url(art['url'])
             if downloaded:
