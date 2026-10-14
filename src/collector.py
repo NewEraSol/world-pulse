@@ -250,9 +250,15 @@ async def collect_all():
                         terms = [t.strip() for t in query_p.replace(';', '|').replace(',', '|').split('|') if t.strip()]
                         matched_word = None
                         for term in terms:
-                            if term in searched_text:
-                                matched_word = term
-                                break
+                            is_simple_word = bool(re.match(r'^[a-zA-Z0-9á-žÁ-Ž]+$', term))
+                            if is_simple_word:
+                                if re.search(r'\b' + re.escape(term) + r'\b', searched_text):
+                                    matched_word = term
+                                    break
+                            else:
+                                if term in searched_text:
+                                    matched_word = term
+                                    break
 
                         if matched_word:
                             cur.execute("""
