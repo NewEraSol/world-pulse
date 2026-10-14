@@ -2838,8 +2838,7 @@
             if (!word || radarActiveFilterWords.size === 0) return false;
             const wLower = word.toLowerCase();
             for (let act of radarActiveFilterWords) {
-                const actLower = act.toLowerCase();
-                if (actLower === wLower || actLower.startsWith(wLower) || wLower.startsWith(actLower)) {
+                if (act.toLowerCase() === wLower) {
                     return true;
                 }
             }

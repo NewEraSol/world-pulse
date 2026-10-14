@@ -631,6 +631,7 @@ def get_alerts():
         SELECT a.*, COUNT(h.id) as hit_count
         FROM alerts a
         LEFT JOIN alert_hits h ON a.id = h.alert_id
+        WHERE a.is_active = 1
         GROUP BY a.id
         ORDER BY a.id ASC
     """)
