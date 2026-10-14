@@ -1858,7 +1858,7 @@
         }
 
         async function toggleCardSignal(aid, btnEl) {
-            const voter = getOrCreateVoterHash();
+            const voter = getVoterHash();
             try {
                 const res = await fetch(`/api/articles/${aid}/signal`, {
                     method: 'POST',
@@ -1884,7 +1884,7 @@
         async function toggleModalSignal() {
             if (!currentArticleData || !currentArticleData.id) return;
             const aid = currentArticleData.id;
-            const voter = getOrCreateVoterHash();
+            const voter = getVoterHash();
             const btn = document.getElementById('modal-signal-btn');
             const countEl = document.getElementById('modal-signal-count');
             try {
@@ -1954,7 +1954,7 @@
             `;
 
             try {
-                const vh = getOrCreateVoterHash();
+                const vh = getVoterHash();
                 const res = await fetch(`/api/articles/${articleId}?voter_hash=${encodeURIComponent(vh)}`);
                 currentArticleData = await res.json();
 
