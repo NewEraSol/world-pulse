@@ -72,17 +72,21 @@ def get_or_translate_article(article_id: int):
     art = dict(row)
     needs_update = False
 
-    # 1. Extrakcia plného originálneho textu článku, ak ešte nie je v DB
+    # 1. Extrakcia plného originálneho textu článku
+    # Ak je v DB len perex z RSS (alebo krátky text < 700 znakov), stiahneme skutočný plný článok cez trafilatura
     full_text_orig = art.get('content_snippet') or art.get('perex_orig') or ''
-    # Pre Telegram príspevky (t.me) NIKDY nevoláme trafilaturu (pretože stiahne len widget boilerplate 'Download Context Embed Copy')
     is_tg = 't.me' in (art.get('url') or '')
-    if not is_tg and (not full_text_orig or len(full_text_orig.strip()) < 100):
+    # Ak nie je Telegram a máme len krátky perex alebo málo textu, pokúsime sa stiahnuť celý článok z webu média
+    if not is_tg and (not full_text_orig or len(full_text_orig.strip()) < 700 or full_text_orig.strip() == (art.get('perex_orig') or '').strip()):
         try:
             downloaded = trafilatura.fetch_url(art['url'])
             if downloaded:
                 extracted = trafilatura.extract(downloaded)
                 if extracted and len(extracted.strip()) > len(full_text_orig or ""):
                     full_text_orig = extracted
+                    # Keď máme nový plný text, musíme prepočítať aj preklady celého tela
+                    art['content_sk'] = None
+                    art['content_en'] = None
                     needs_update = True
         except Exception:
             pass
@@ -117,20 +121,20 @@ def get_or_translate_article(article_id: int):
     if orig_lang in ['sk', 'cs']:
         full_text_sk = full_text_orig
         if not full_text_en:
-            full_text_en = translate_chunks(full_text_orig[:4000], 'en')
+            full_text_en = translate_chunks(full_text_orig[:12000], 'en')
             needs_update = True
     elif orig_lang == 'en':
         full_text_en = full_text_orig
         if not full_text_sk:
-            full_text_sk = translate_chunks(full_text_orig[:4000], 'sk')
+            full_text_sk = translate_chunks(full_text_orig[:12000], 'sk')
             needs_update = True
     else:
         # Cudzí jazyk (ukrajinčina, ruština, čínština, nemčina atď.)
         if not full_text_sk or full_text_sk == full_text_orig or not is_substantially_different(full_text_orig, full_text_sk):
-            full_text_sk = translate_chunks(full_text_orig[:4000], 'sk')
+            full_text_sk = translate_chunks(full_text_orig[:12000], 'sk')
             needs_update = True
         if not full_text_en or full_text_en == full_text_orig or not is_substantially_different(full_text_orig, full_text_en):
-            full_text_en = translate_chunks(full_text_orig[:4000], 'en')
+            full_text_en = translate_chunks(full_text_orig[:12000], 'en')
             needs_update = True
 
     if needs_update:
