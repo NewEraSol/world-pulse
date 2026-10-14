@@ -246,9 +246,9 @@ def get_articles(
             sql += time_filter
             params.extend([since, since])
         if sort_by == "views":
-            sql += " ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         elif sort_by == "signals":
-            sql += " ORDER BY signals_count DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+            sql += " AND (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) > 0 ORDER BY (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         else:
             sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
@@ -275,9 +275,9 @@ def get_articles(
             sql += time_filter
             params.extend([since, since])
         if sort_by == "views":
-            sql += " ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         elif sort_by == "signals":
-            sql += " ORDER BY signals_count DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+            sql += " AND (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) > 0 ORDER BY (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         else:
             sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
@@ -302,9 +302,9 @@ def get_articles(
             sql += time_filter
             params.extend([since, since])
         if sort_by == "views":
-            sql += " ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         elif sort_by == "signals":
-            sql += " ORDER BY signals_count DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+            sql += " AND (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) > 0 ORDER BY (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         else:
             sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
