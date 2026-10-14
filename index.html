@@ -2679,53 +2679,49 @@
             const overlay = document.getElementById('cobe-html-overlay');
             if (!overlay || !currentPulseMarkers.length) return;
             const size = overlay.offsetWidth;
-            const radius = size / 2;
+
+            // Presný výpočet projekcie podľa originálneho engine Cobe (latLonTo3D a applyRotation)
+            const cx = Math.cos(theta);
+            const cy = Math.cos(phi);
+            const sx = Math.sin(theta);
+            const sy = Math.sin(phi);
+            const GLOBE_R = 0.8; // Základný polomer glóbusu v Cobe shaderoch
 
             currentPulseMarkers.forEach(m => {
                 const el = document.getElementById(`cobe-pulse-${m.id}`);
                 if (!el) return;
 
-                const lat = (m.location[0] * Math.PI) / 180;
-                const lon = (m.location[1] * Math.PI) / 180 - Math.PI;
+                const latDeg = m.location[0];
+                const lonDeg = m.location[1];
 
-                // 3D smerový vektor bodu presne podľa funkcie _([lat, lon]) z Cobe:
-                // _([lat, lon]): x = -sin(lat)*sin(lon), y = cos(lat), z = sin(lat)*cos(lon)
-                // Tu Math.sin(lat) je cos(zemepisnej sirky) a Math.cos(lat) je sin(zemepisnej sirky) v beznom zmysle:
-                // Cobe pouziva: v = lat*PI/180 (od rovníka 0..PI/2), s = sin(v), ce = cos(v)
-                const v = lat;
-                const e = lon;
-                const s = Math.sin(v);
-                const ce = Math.cos(v);
-                const se_e = Math.sin(e);
-                const ce_e = Math.cos(e);
+                const latRad = (latDeg * Math.PI) / 180;
+                const lonRad = (lonDeg * Math.PI) / 180 - Math.PI;
+                const cosLat = Math.cos(latRad);
 
-                // Bod na sfére pred rotáciou [x0, y0, z0]
-                const x0 = -s * se_e;
-                const y0 = ce;
-                const z0 = s * ce_e;
+                // 3D pozícia na jednotkovej sfére podľa Cobe latLonTo3D:
+                // [-cosLat * cos(lonRad), sin(latRad), cosLat * sin(lonRad)]
+                const p0 = -cosLat * Math.cos(lonRad) * GLOBE_R;
+                const p1 = Math.sin(latRad) * GLOBE_R;
+                const p2 = cosLat * Math.sin(lonRad) * GLOBE_R;
 
-                // Transformácia shaderu v Cobe:
-                // C = cos(phi)*x0 + sin(phi)*z0
-                // F = sin(phi)*sin(theta)*x0 + cos(theta)*y0 - cos(phi)*sin(theta)*z0
-                // visible = -sin(phi)*cos(theta)*x0 + sin(theta)*y0 + cos(phi)*cos(theta)*z0 >= 0
-                const cosPhi = Math.cos(phi);
-                const sinPhi = Math.sin(phi);
-                const cosTheta = Math.cos(theta);
-                const sinTheta = Math.sin(theta);
+                // Rotácia bodu podľa Cobe matice
+                const rx = cy * p0 + sy * p2;
+                const ry = sy * sx * p0 + cx * p1 - cy * sx * p2;
+                const rz = -sy * cx * p0 + sx * p1 + cy * cx * p2;
 
-                const C = cosPhi * x0 + sinPhi * z0;
-                const F = sinPhi * sinTheta * x0 + cosTheta * y0 - cosPhi * sinTheta * z0;
-                const visible = -sinPhi * cosTheta * x0 + sinTheta * y0 + cosPhi * cosTheta * z0;
+                // Bod je otočený k pozorovateľovi ak rz >= 0
+                const isFront = rz >= 0;
 
-                // Ak je bod na privrátenej strane glóbusu k pozorovateľovi:
-                if (visible >= 0.05 || (C * C + F * F) < 0.64) {
-                    const screenX = radius + C * radius;
-                    const screenY = radius - F * radius;
+                if (isFront) {
+                    const screenX = ((rx + 1) / 2) * size;
+                    const screenY = ((-ry + 1) / 2) * size;
                     el.style.left = `${screenX}px`;
                     el.style.top = `${screenY}px`;
-                    el.style.opacity = visible >= 0.05 ? "1" : "0.3";
+                    el.style.opacity = rz > 0.1 ? "1" : "0.5";
+                    el.style.display = "flex";
                 } else {
                     el.style.opacity = "0";
+                    el.style.display = "none";
                 }
             });
         }
@@ -2738,10 +2734,8 @@
                 if (wrapper) wrapper.classList.add('hidden');
                 if (arrow) arrow.innerText = '▼';
             }
-            // Presný prepočet zemepisnej dĺžky na uhol phi a theta pre Cobe
-            // Shader v Cobe: _([lat, lon]) -> [-sin(lat)*sin(lon-PI), cos(lat), sin(lat)*cos(lon-PI)]
-            // Preto stred prednej plochy z=1 nastane presne pri phi = -lon*PI/180 + PI:
-            const targetPhi = -(lon * Math.PI) / 180 + Math.PI;
+            // Presný prepočet zemepisnej šírky a dĺžky na phi a theta, aby zvolená krajina rotovala priamo do stredu pohľadu
+            const targetPhi = -(Math.PI / 2) - ((lon * Math.PI) / 180);
             const targetTheta = (lat * Math.PI) / 180;
             cobePhi = targetPhi;
             cobePhiOffset = 0;
