@@ -198,6 +198,7 @@ def get_articles(
     alert_id: Optional[int] = None,
     period: Optional[str] = "all",
     alerts_only: bool = False,
+    sort_by: Optional[str] = "latest",
     limit: int = 50,
     offset: int = 0
 ):
@@ -244,7 +245,12 @@ def get_articles(
         if time_filter:
             sql += time_filter
             params.extend([since, since])
-        sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?"
+        if sort_by == "views":
+            sql += " ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        elif sort_by == "signals":
+            sql += " ORDER BY signals_count DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        else:
+            sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
         cur.execute(sql, tuple(params))
     elif query:
@@ -268,14 +274,21 @@ def get_articles(
         if time_filter:
             sql += time_filter
             params.extend([since, since])
-        sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?"
+        if sort_by == "views":
+            sql += " ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        elif sort_by == "signals":
+            sql += " ORDER BY signals_count DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        else:
+            sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
         cur.execute(sql, tuple(params))
     else:
         sql = f"""
             SELECT a.id, a.country_iso, a.title_orig, a.title_sk, a.title_en, a.perex_orig, a.perex_sk, a.perex_en,
                    a.url, a.published_at, a.scraped_at, m.name as media_name, c.name_sk as country_name,
-                   CASE WHEN fav.id IS NOT NULL THEN 1 ELSE 0 END as is_favorite
+                   CASE WHEN fav.id IS NOT NULL THEN 1 ELSE 0 END as is_favorite,
+                   COALESCE(a.views_count, 0) as views_count,
+                   (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) as signals_count
             FROM articles a
             JOIN media_outlets m ON a.media_id = m.id
             JOIN countries c ON a.country_iso = c.iso_code
@@ -288,7 +301,12 @@ def get_articles(
         if time_filter:
             sql += time_filter
             params.extend([since, since])
-        sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?"
+        if sort_by == "views":
+            sql += " ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        elif sort_by == "signals":
+            sql += " ORDER BY signals_count DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        else:
+            sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
         cur.execute(sql, tuple(params))
 
@@ -328,9 +346,9 @@ def get_articles(
     return rows
 
 @app.get("/api/articles/{article_id}")
-def get_article_detail(article_id: int):
+def get_article_detail(article_id: int, voter_hash: Optional[str] = None):
     """
-    Vrati plny prepis clanku s kompletnym prekladom do SK aj EN a priradenymi radarovymi zachytmi.
+    Vrati plny prepis clanku s kompletnym prekladom do SK aj EN, priradenymi radarovymi zachytmi a inkrementom videni.
     """
     detail = get_or_translate_article(article_id)
     if not detail:
@@ -338,6 +356,14 @@ def get_article_detail(article_id: int):
     
     conn = get_db()
     cur = conn.cursor()
+
+    # Inkrement počtu videní
+    try:
+        cur.execute("UPDATE articles SET views_count = COALESCE(views_count, 0) + 1 WHERE id = ?", (article_id,))
+        conn.commit()
+    except Exception:
+        pass
+
     cur.execute("""
         SELECT al.name as alert_name, al.query_pattern, h.matched_text
         FROM alert_hits h
@@ -353,9 +379,52 @@ def get_article_detail(article_id: int):
         })
     cur.execute("SELECT 1 FROM favorites WHERE article_id = ?", (article_id,))
     detail['is_favorite'] = 1 if cur.fetchone() else 0
+
+    # Zistenie počtu označení 'Pozri si to' a aktuálneho stavu pre daného používateľa
+    cur.execute("SELECT COUNT(*) FROM article_signals WHERE article_id = ?", (article_id,))
+    detail['signals_count'] = cur.fetchone()[0]
+
+    cur.execute("SELECT COALESCE(views_count, 0) FROM articles WHERE id = ?", (article_id,))
+    v_row = cur.fetchone()
+    detail['views_count'] = v_row[0] if v_row else 1
+
+    detail['has_signaled'] = 0
+    if voter_hash:
+        cur.execute("SELECT 1 FROM article_signals WHERE article_id = ? AND voter_hash = ?", (article_id, voter_hash))
+        detail['has_signaled'] = 1 if cur.fetchone() else 0
+
     conn.close()
     detail['matched_alerts'] = matched_alerts
     return detail
+
+class SignalPayload(BaseModel):
+    voter_hash: str
+
+@app.post("/api/articles/{article_id}/signal")
+def toggle_article_signal(article_id: int, payload: SignalPayload):
+    """
+    Označenie článku 'Pozri si to' (decentný komunitný signál).
+    """
+    vh = (payload.voter_hash or "").strip()
+    if not vh or len(vh) < 6:
+        raise HTTPException(status_code=400, detail="Neplatný identifikátor.")
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM article_signals WHERE article_id = ? AND voter_hash = ?", (article_id, vh))
+    existing = cur.fetchone()
+    if existing:
+        cur.execute("DELETE FROM article_signals WHERE article_id = ? AND voter_hash = ?", (article_id, vh))
+        has_signaled = 0
+    else:
+        cur.execute("INSERT OR IGNORE INTO article_signals (article_id, voter_hash) VALUES (?, ?)", (article_id, vh))
+        has_signaled = 1
+    conn.commit()
+
+    cur.execute("SELECT COUNT(*) FROM article_signals WHERE article_id = ?", (article_id,))
+    count = cur.fetchone()[0]
+    conn.close()
+    return {"status": "ok", "article_id": article_id, "has_signaled": has_signaled, "signals_count": count}
 
 @app.get("/api/keyword-frequency")
 def get_keyword_frequency(

@@ -273,7 +273,14 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-1.5 shrink-0">
+                <!-- Decentné triedenie: LIVE / NAJČÍTANEJŠIE / ODPORÚČANÉ -->
+                <div class="flex items-center gap-1 text-[10.5px] font-telemetry shrink-0">
+                    <div class="hidden sm:flex items-center bg-black border border-white/15 p-0.5">
+                        <button onclick="setFeedSort('latest')" id="sort-btn-latest" class="feed-sort-btn px-2 py-0.5 text-white bg-[#990000] font-bold transition uppercase">LIVE</button>
+                        <button onclick="setFeedSort('views')" id="sort-btn-views" class="feed-sort-btn px-2 py-0.5 text-gray-400 hover:text-white transition uppercase">NAJČÍTANEJŠIE</button>
+                        <button onclick="setFeedSort('signals')" id="sort-btn-signals" class="feed-sort-btn px-2 py-0.5 text-gray-400 hover:text-white transition uppercase">ODPORÚČANÉ</button>
+                    </div>
+
                     <!-- Rýchly skok na Radar posledných zásahov -->
                     <button onclick="scrollToRadarHits()" class="px-2.5 py-1 bg-black hover:bg-[#990000] text-white border border-[#990000] text-[10px] font-telemetry font-bold transition uppercase flex items-center gap-1 shadow-sm" title="Rýchly skok na Radar Posledných Zásahov">
                         <span class="w-2 h-2 rounded-full bg-[#990000] animate-pulse"></span>
@@ -1070,7 +1077,14 @@
                         <span id="modal-report-icon">⚠️</span>
                         <span id="modal-report-text">NAHLÁSIŤ</span>
                     </button>
-                    <button id="modal-fav-btn" onclick="toggleModalFavorite()" class="px-2.5 py-1 bg-black hover:bg-gray-800 text-gray-200 text-[10.5px] font-telemetry font-bold transition flex items-center gap-1 border border-white/20" title="Uložiť do knižnice">
+                    <!-- Tlačidlo POZRI SI TO (Decentný komunitný signál) -->
+                    <button id="modal-signal-btn" onclick="toggleModalSignal()" class="px-2.5 py-1 bg-black hover:bg-[#990000]/20 text-gray-300 hover:text-white text-[10.5px] font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20" title="Odporučiť článok komunite">
+                        <span id="modal-signal-icon" class="text-xs">⊙</span>
+                        <span id="modal-signal-label">POZRI SI TO</span>
+                        <span id="modal-signal-count" class="font-mono text-[10px] text-[#ff4d4d] ml-0.5">0</span>
+                    </button>
+                    <!-- Uložiť do knižnice (iba pre prihláseného admina) -->
+                    <button id="modal-fav-btn" onclick="toggleModalFavorite()" class="admin-only hidden px-2.5 py-1 bg-black hover:bg-gray-800 text-gray-200 text-[10.5px] font-telemetry font-bold transition flex items-center gap-1 border border-white/20" title="Uložiť do knižnice">
                         <span id="modal-fav-icon">⭐</span>
                         <span id="modal-fav-text">ULOŽIŤ</span>
                     </button>
@@ -1380,6 +1394,7 @@
                 let currentCountry = '';
         let currentPeriod = '24h';
         let currentQuery = '';
+        let currentFeedSort = 'latest'; // 'latest', 'views', 'signals'
         let currentArticlesOffset = 0;
         let currentGlobeArticlesOffset = 0;
         const ARTICLES_BATCH_SIZE = 50;
@@ -1640,11 +1655,27 @@
                             ${(a.url && a.url.includes('t.me')) || (a.media_name && a.media_name.includes('TG')) ? '<span class="px-1 py-0.2 bg-[#990000] text-white border border-[#990000] rounded text-[9px] font-bold">✈️ TG</span>' : ''}
                             <span>${a.media_name} · ${a.country_name}</span>
                         </span>
-                        <div class="flex items-center gap-2">
-                            <button onclick="event.stopPropagation(); toggleCardFavorite(${a.id}, this)" class="p-1 rounded hover:bg-gray-800 transition ${a.is_favorite ? 'text-white' : 'text-gray-500 hover:text-white'}" title="${a.is_favorite ? 'Odstrániť z knižnice' : 'Uložiť do knižnice'}">
+                        <div class="flex items-center gap-2.5 font-telemetry">
+                            <!-- Hviezdička v knižnici je dostupná iba pre prihláseného admina -->
+                            <button onclick="event.stopPropagation(); toggleCardFavorite(${a.id}, this)" class="admin-only hidden p-1 rounded hover:bg-gray-800 transition ${a.is_favorite ? 'text-white' : 'text-gray-500 hover:text-white'}" title="${a.is_favorite ? 'Odstrániť z knižnice' : 'Uložiť do knižnice'}">
                                 ${a.is_favorite ? '★' : '☆'}
                             </button>
-                            <div class="text-[11px] font-telemetry text-gray-400 flex items-center gap-2">
+
+                            <!-- Decentné zobrazenie videní (biela/sivá) -->
+                            <span class="text-[10px] text-gray-400 flex items-center gap-1" title="Počet prečítaní článku">
+                                <span class="text-gray-500 text-xs font-mono">👁️</span>
+                                <span>${a.views_count || 0}</span>
+                            </span>
+
+                            <!-- Decentné tlačidlo signálu POZRI SI TO -->
+                            <button onclick="event.stopPropagation(); toggleCardSignal(${a.id}, this)" 
+                                    class="card-signal-btn px-1.5 py-0.5 text-[9.5px] border border-white/15 hover:border-[#990000] text-gray-400 hover:text-white transition flex items-center gap-1 select-none" 
+                                    title="Odporučiť článok (Pozri si to)">
+                                <span>⊙</span>
+                                <span>${a.signals_count || 0}</span>
+                            </button>
+
+                            <div class="text-[11px] text-gray-400 flex items-center gap-2">
                                 ${a.published_at ? `<span title="Čas uverejnenia médiom">🕒 ${formatTelemetryDate(a.published_at)}</span>` : ''}
                                 ${a.scraped_at ? `<span class="text-gray-500" title="Čas zachytenia naším systémom">📡 ${formatTelemetryDate(a.scraped_at)}</span>` : ''}
                             </div>
@@ -1811,6 +1842,73 @@
             }
         }
 
+                function setFeedSort(sortMode) {
+            currentFeedSort = sortMode;
+            ['latest', 'views', 'signals'].forEach(k => {
+                const btn = document.getElementById('sort-btn-' + k);
+                if (btn) {
+                    if (k === sortMode) {
+                        btn.className = 'feed-sort-btn px-2 py-0.5 text-white bg-[#990000] font-bold transition uppercase';
+                    } else {
+                        btn.className = 'feed-sort-btn px-2 py-0.5 text-gray-400 hover:text-white transition uppercase';
+                    }
+                }
+            });
+            loadArticles(currentCountry, currentQuery);
+        }
+
+        async function toggleCardSignal(aid, btnEl) {
+            const voter = getOrCreateVoterHash();
+            try {
+                const res = await fetch(`/api/articles/${aid}/signal`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ voter_hash: voter })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    if (d.has_signaled) {
+                        btnEl.classList.add('border-[#990000]', 'text-[#ff4d4d]', 'bg-[#990000]/15');
+                        btnEl.classList.remove('text-gray-400', 'border-white/15');
+                    } else {
+                        btnEl.classList.remove('border-[#990000]', 'text-[#ff4d4d]', 'bg-[#990000]/15');
+                        btnEl.classList.add('text-gray-400', 'border-white/15');
+                    }
+                    btnEl.innerHTML = `<span>⊙</span> <span>${d.signals_count}</span>`;
+                }
+            } catch (e) {
+                console.error('Error toggling card signal:', e);
+            }
+        }
+
+        async function toggleModalSignal() {
+            if (!currentArticleData || !currentArticleData.id) return;
+            const aid = currentArticleData.id;
+            const voter = getOrCreateVoterHash();
+            const btn = document.getElementById('modal-signal-btn');
+            const countEl = document.getElementById('modal-signal-count');
+            try {
+                const res = await fetch(`/api/articles/${aid}/signal`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ voter_hash: voter })
+                });
+                const d = await res.json();
+                if (d.status === 'ok') {
+                    currentArticleData.has_signaled = d.has_signaled;
+                    currentArticleData.signals_count = d.signals_count;
+                    if (countEl) countEl.innerText = d.signals_count;
+                    if (d.has_signaled) {
+                        btn.className = 'px-2.5 py-1 bg-[#990000]/20 text-[#ff4d4d] border border-[#990000] text-[10.5px] font-telemetry font-bold transition flex items-center gap-1.5';
+                    } else {
+                        btn.className = 'px-2.5 py-1 bg-black hover:bg-[#990000]/20 text-gray-300 hover:text-white text-[10.5px] font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20';
+                    }
+                }
+            } catch (e) {
+                console.error('Error toggling modal signal:', e);
+            }
+        }
+
         async function openArticleModal(articleId) {
             const modal = document.getElementById('article-modal');
             const body = document.getElementById('modal-body');
@@ -1856,13 +1954,16 @@
             `;
 
             try {
-                const res = await fetch(`/api/articles/${articleId}`);
+                const vh = getOrCreateVoterHash();
+                const res = await fetch(`/api/articles/${articleId}?voter_hash=${encodeURIComponent(vh)}`);
                 currentArticleData = await res.json();
 
                 document.getElementById('modal-media-country').innerText = `${currentArticleData.media_name} (${currentArticleData.country_name})`;
                 const pubStr = currentArticleData.published_at ? `🕒 Vydané: ${formatTelemetryDateFull(currentArticleData.published_at)}` : '';
                 const scrStr = currentArticleData.scraped_at ? `📡 Zachytené: ${formatTelemetryDateFull(currentArticleData.scraped_at)}` : '';
-                document.getElementById('modal-date').innerText = [pubStr, scrStr].filter(Boolean).join('  |  ');
+                const scrStr = currentArticleData.scraped_at ? `📡 Zachytené: ${formatTelemetryDateFull(currentArticleData.scraped_at)}` : '';
+                const viewsStr = `👁️ ${currentArticleData.views_count || 1} videní`;
+                document.getElementById('modal-date').innerText = [pubStr, scrStr, viewsStr].filter(Boolean).join('  |  ');
                 document.getElementById('modal-title-orig').innerText = currentArticleData.title_orig;
                 document.getElementById('modal-title-sk').innerText = currentArticleData.title_sk || currentArticleData.title_orig;
                 document.getElementById('modal-title-en').innerText = currentArticleData.title_en || currentArticleData.title_orig;
@@ -1897,6 +1998,16 @@
                 currentModalLang = 'sk';
                 document.getElementById('modal-title-orig').innerText = currentArticleData.title_sk || currentArticleData.title_orig;
                 updateModalFavButton(currentArticleData.is_favorite);
+                                const modalSignalBtn = document.getElementById('modal-signal-btn');
+                const modalSignalCount = document.getElementById('modal-signal-count');
+                if (modalSignalCount) modalSignalCount.innerText = currentArticleData.signals_count || 0;
+                if (modalSignalBtn) {
+                    if (currentArticleData.has_signaled) {
+                        modalSignalBtn.className = 'px-2.5 py-1 bg-[#990000]/20 text-[#ff4d4d] border border-[#990000] text-[10.5px] font-telemetry font-bold transition flex items-center gap-1.5';
+                    } else {
+                        modalSignalBtn.className = 'px-2.5 py-1 bg-black hover:bg-[#990000]/20 text-gray-300 hover:text-white text-[10.5px] font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20';
+                    }
+                }
                 renderModalText();
 
             } catch (e) {
@@ -3746,6 +3857,16 @@
                 }
                 currentArticleData.is_favorite = willBeFav ? 1 : 0;
                 updateModalFavButton(currentArticleData.is_favorite);
+                                const modalSignalBtn = document.getElementById('modal-signal-btn');
+                const modalSignalCount = document.getElementById('modal-signal-count');
+                if (modalSignalCount) modalSignalCount.innerText = currentArticleData.signals_count || 0;
+                if (modalSignalBtn) {
+                    if (currentArticleData.has_signaled) {
+                        modalSignalBtn.className = 'px-2.5 py-1 bg-[#990000]/20 text-[#ff4d4d] border border-[#990000] text-[10.5px] font-telemetry font-bold transition flex items-center gap-1.5';
+                    } else {
+                        modalSignalBtn.className = 'px-2.5 py-1 bg-black hover:bg-[#990000]/20 text-gray-300 hover:text-white text-[10.5px] font-telemetry font-bold transition flex items-center gap-1.5 border border-white/20';
+                    }
+                }
                 loadStats();
                 const favView = document.getElementById('view-favorites');
                 if (favView && !favView.classList.contains('hidden')) {
