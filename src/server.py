@@ -242,14 +242,17 @@ def get_articles(
         if country:
             sql += " AND a.country_iso = ?"
             params.append(country)
-        if time_filter:
-            sql += time_filter
-            params.extend([since, since])
-        if sort_by == "views":
-            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
-        elif sort_by == "signals":
+        if sort_by == "signals":
             sql += " AND (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) > 0 ORDER BY (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        elif sort_by == "views":
+            if time_filter:
+                sql += time_filter
+                params.extend([since, since])
+            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         else:
+            if time_filter:
+                sql += time_filter
+                params.extend([since, since])
             sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
         cur.execute(sql, tuple(params))
@@ -271,14 +274,17 @@ def get_articles(
         if country:
             sql += " AND a.country_iso = ?"
             params.append(country)
-        if time_filter:
-            sql += time_filter
-            params.extend([since, since])
-        if sort_by == "views":
-            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
-        elif sort_by == "signals":
+        if sort_by == "signals":
             sql += " AND (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) > 0 ORDER BY (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        elif sort_by == "views":
+            if time_filter:
+                sql += time_filter
+                params.extend([since, since])
+            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         else:
+            if time_filter:
+                sql += time_filter
+                params.extend([since, since])
             sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
         cur.execute(sql, tuple(params))
@@ -298,14 +304,17 @@ def get_articles(
         if country:
             sql += " AND a.country_iso = ?"
             params.append(country)
-        if time_filter:
-            sql += time_filter
-            params.extend([since, since])
-        if sort_by == "views":
-            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
-        elif sort_by == "signals":
+        if sort_by == "signals":
             sql += " AND (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) > 0 ORDER BY (SELECT COUNT(*) FROM article_signals sig WHERE sig.article_id = a.id) DESC, a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
+        elif sort_by == "views":
+            if time_filter:
+                sql += time_filter
+                params.extend([since, since])
+            sql += " AND COALESCE(a.views_count, 0) > 0 ORDER BY a.views_count DESC, a.id DESC LIMIT ? OFFSET ?"
         else:
+            if time_filter:
+                sql += time_filter
+                params.extend([since, since])
             sql += " ORDER BY CASE WHEN a.published_at > datetime('now', '+5 minutes') THEN a.scraped_at ELSE a.published_at END DESC LIMIT ? OFFSET ?" 
         params.extend([limit, offset])
         cur.execute(sql, tuple(params))
